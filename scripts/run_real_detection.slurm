@@ -1,9 +1,10 @@
 #!/bin/bash
 #SBATCH -J pal5-detect
-#SBATCH -q interactive
+#SBATCH -q shared
 #SBATCH -C cpu
 #SBATCH -N 1
-#SBATCH --cpus-per-task=64
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=64G
 #SBATCH -t 02:00:00
 #SBATCH -o logs/pal5_detect_%j.out
 
@@ -14,5 +15,9 @@ mkdir -p logs
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate desi_env
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
 
 bash ./run_real_detection.sh "$@"
