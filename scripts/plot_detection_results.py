@@ -30,6 +30,59 @@ def plot_phi12_map(table: Table, outdir: Path) -> None:
     plt.close(fig)
 
 
+def plot_phi12_logsum(table: Table, outdir: Path, bins=(500, 220)) -> None:
+    phi1 = np.asarray(table["PHI1"], dtype=float)
+    phi2 = np.asarray(table["PHI2"], dtype=float)
+    p_mem = np.asarray(table["P_MEM"], dtype=float)
+    mask = np.isfinite(phi1) & np.isfinite(phi2) & np.isfinite(p_mem)
+    phi1 = phi1[mask]
+    phi2 = phi2[mask]
+    p_mem = p_mem[mask]
+
+    hist, xedges, yedges = np.histogram2d(phi1, phi2, bins=bins, range=[[-25, 20], [-5, 10]], weights=p_mem)
+    image = np.full_like(hist.T, np.nan, dtype=float)
+    pos = hist.T > 0
+    image[pos] = np.log10(hist.T[pos])
+
+    fig, ax = plt.subplots(figsize=(12, 5), dpi=220)
+    im = ax.imshow(
+        image,
+        origin="lower",
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        aspect="auto",
+        cmap="inferno",
+    )
+    plt.colorbar(im, ax=ax, label=r"$\log_{10}\sum P_{\rm MEM}$ per bin")
+    ax.set_xlabel(r"$\phi_1$ [deg]")
+    ax.set_ylabel(r"$\phi_2$ [deg]")
+    ax.set_title("Pal 5 Weighted Stream Density")
+    fig.tight_layout()
+    fig.savefig(outdir / "pal5_phi12_logsum_pmem.png")
+    plt.close(fig)
+
+
+def plot_highprob_members(table: Table, outdir: Path, threshold: float = 0.5) -> None:
+    phi1 = np.asarray(table["PHI1"], dtype=float)
+    phi2 = np.asarray(table["PHI2"], dtype=float)
+    p_mem = np.asarray(table["P_MEM"], dtype=float)
+    mask = np.isfinite(phi1) & np.isfinite(phi2) & np.isfinite(p_mem) & (p_mem >= threshold)
+    phi1 = phi1[mask]
+    phi2 = phi2[mask]
+    p_mem = p_mem[mask]
+
+    fig, ax = plt.subplots(figsize=(12, 5), dpi=220)
+    sc = ax.scatter(phi1, phi2, c=p_mem, s=1.0, cmap="magma", vmin=threshold, vmax=1.0, rasterized=True)
+    plt.colorbar(sc, ax=ax, label="P_MEM")
+    ax.set_xlabel(r"$\phi_1$ [deg]")
+    ax.set_ylabel(r"$\phi_2$ [deg]")
+    ax.set_xlim(-25, 20)
+    ax.set_ylim(-5, 10)
+    ax.set_title(f"High-Probability Stream Candidates (P_MEM >= {threshold:.1f})")
+    fig.tight_layout()
+    fig.savefig(outdir / "pal5_phi12_highprob_members.png")
+    plt.close(fig)
+
+
 def plot_radec_map(table: Table, outdir: Path) -> None:
     ra = np.asarray(table["RA"], dtype=float)
     dec = np.asarray(table["DEC"], dtype=float)
@@ -43,6 +96,37 @@ def plot_radec_map(table: Table, outdir: Path) -> None:
     ax.set_title("Pal 5 Candidate Distribution on the Sky")
     fig.tight_layout()
     fig.savefig(outdir / "pal5_radec_overall.png")
+    plt.close(fig)
+
+
+def plot_radec_logsum(table: Table, outdir: Path, bins=(420, 320)) -> None:
+    ra = np.asarray(table["RA"], dtype=float)
+    dec = np.asarray(table["DEC"], dtype=float)
+    p_mem = np.asarray(table["P_MEM"], dtype=float)
+    mask = np.isfinite(ra) & np.isfinite(dec) & np.isfinite(p_mem)
+    ra = ra[mask]
+    dec = dec[mask]
+    p_mem = p_mem[mask]
+
+    hist, xedges, yedges = np.histogram2d(ra, dec, bins=bins, weights=p_mem)
+    image = np.full_like(hist.T, np.nan, dtype=float)
+    pos = hist.T > 0
+    image[pos] = np.log10(hist.T[pos])
+
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=220)
+    im = ax.imshow(
+        image,
+        origin="lower",
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        aspect="auto",
+        cmap="viridis",
+    )
+    plt.colorbar(im, ax=ax, label=r"$\log_{10}\sum P_{\rm MEM}$ per bin")
+    ax.set_xlabel("RA [deg]")
+    ax.set_ylabel("Dec [deg]")
+    ax.set_title("Pal 5 Weighted Sky Density")
+    fig.tight_layout()
+    fig.savefig(outdir / "pal5_radec_logsum_pmem.png")
     plt.close(fig)
 
 
@@ -117,6 +201,34 @@ def plot_track_overlay(table: Table, track: Table, outdir: Path) -> None:
     plt.close(fig)
 
 
+def plot_track_overlay_highprob(table: Table, track: Table, outdir: Path, threshold: float = 0.5) -> None:
+    phi1 = np.asarray(table["PHI1"], dtype=float)
+    phi2 = np.asarray(table["PHI2"], dtype=float)
+    p_mem = np.asarray(table["P_MEM"], dtype=float)
+    mask = np.isfinite(phi1) & np.isfinite(phi2) & np.isfinite(p_mem) & (p_mem >= threshold)
+    phi1 = phi1[mask]
+    phi2 = phi2[mask]
+    p_mem = p_mem[mask]
+
+    fig, ax = plt.subplots(figsize=(12, 5), dpi=220)
+    sc = ax.scatter(phi1, phi2, c=p_mem, s=1.2, cmap="cividis", vmin=threshold, vmax=1.0, rasterized=True)
+    plt.colorbar(sc, ax=ax, label="P_MEM")
+    if len(track):
+        phi1_bin = np.asarray(track["phi1_bin"], dtype=float)
+        mu = np.asarray(track["mu"], dtype=float)
+        sigma = np.asarray(track["sigma"], dtype=float)
+        ax.plot(phi1_bin, mu, color="tab:red", lw=2.2)
+        ax.fill_between(phi1_bin, mu - sigma, mu + sigma, color="tab:red", alpha=0.22)
+    ax.set_xlabel(r"$\phi_1$ [deg]")
+    ax.set_ylabel(r"$\phi_2$ [deg]")
+    ax.set_xlim(-25, 20)
+    ax.set_ylim(-5, 10)
+    ax.set_title(f"Extracted Track over High-Probability Members (P_MEM >= {threshold:.1f})")
+    fig.tight_layout()
+    fig.savefig(outdir / "pal5_track_overlay_highprob.png")
+    plt.close(fig)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Pal 5 detection summary figures.")
     parser.add_argument("--catalog", required=True)
@@ -131,10 +243,14 @@ def main() -> None:
     track = Table.read(args.track)
 
     plot_phi12_map(table, outdir)
+    plot_phi12_logsum(table, outdir)
+    plot_highprob_members(table, outdir, threshold=0.5)
     plot_radec_map(table, outdir)
+    plot_radec_logsum(table, outdir)
     plot_cmd_panels(table, outdir)
     plot_probability_hist(table, outdir)
     plot_track_overlay(table, track, outdir)
+    plot_track_overlay_highprob(table, track, outdir, threshold=0.5)
     print(f"wrote plots to {outdir}")
 
 
