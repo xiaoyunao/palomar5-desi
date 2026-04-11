@@ -21,9 +21,10 @@ Rebuild the Palomar 5 real-stream detection workflow from raw DESI data and theo
 ## Outstanding Issues
 
 - Current notebooks are not fully reproducible or parameterized.
-- The background CMD model in `3_cmd_prob.ipynb` uses a fixed off-stream strip and may be biased by depth variation.
-- The current spatial prior hard-codes a rough stream track and can leak assumptions into the detection stage.
+- The original background CMD model in `3_cmd_prob.ipynb` uses a fixed off-stream strip and may be biased by depth variation.
+- The original spatial prior hard-codes a rough stream track and can leak assumptions into the detection stage.
 - Need a clean split between login-node-safe smoke tests and full production runs.
+- Need to inspect whether the current `P_MEM` thresholding is still too conservative on the full catalog.
 
 ## Validation Criteria
 
@@ -34,8 +35,12 @@ Rebuild the Palomar 5 real-stream detection workflow from raw DESI data and theo
 
 ## Next Recommended Steps
 
-1. Initialize git and create the initial project commit.
-2. Review literature on non-dynamical stream detection under non-uniform backgrounds.
-3. Implement the script-based pre-selection, isochrone, and probability stages.
-4. Validate on a small chunk locally or via a login-node-safe remote smoke test.
-5. Prepare and launch the full NERSC production run from a compute allocation.
+1. Launch the full NERSC compute-node run from raw DESI input through `final_glt24_membership.fits`.
+2. Inspect the full-catalog `P_ISO` and `P_MEM` distributions and the extracted stream track.
+3. If needed, tune:
+   - `logk_cmd`
+   - `logk_mem`
+   - sideband widths
+   - `phi1`/depth background binning
+4. Decide whether to reintroduce a Gaussian-plus-background track fit after the full run.
+5. Once the front end is stable, connect its outputs to the downstream simulation and dynamical fitting stage.

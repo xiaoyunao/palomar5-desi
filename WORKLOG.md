@@ -2,6 +2,40 @@
 
 ## 2026-04-11
 
+- Task: scriptify the real-stream detection pipeline and validate it on NERSC
+- Files changed: `scripts/pal5_common.py`, `scripts/preselect_catalog.py`, `scripts/apply_residual_extinction.py`, `scripts/compute_membership.py`, `scripts/extract_stream_track.py`, `scripts/run_real_detection.sh`, `scripts/run_real_detection.slurm`
+- Commands run:
+  - `python3 -m py_compile scripts/*.py`
+  - local synthetic smoke tests for `compute_membership.py` and `extract_stream_track.py`
+  - `ssh yunao@perlmutter.nersc.gov ... conda activate desi_env ...`
+  - `scp scripts/* /pscratch/sd/y/yunao/pal5_rebuild_scripts/`
+  - real-data smoke run on `/pscratch/sd/y/yunao/Palomar_5_new/final_glt24_extcorr.fits`
+- Key findings:
+  - rewrote the notebook workflow into reproducible scripts for pre-selection, residual extinction correction, membership estimation, and track extraction
+  - removed local `scipy` runtime dependencies to make validation more robust
+  - current notebook has several method issues:
+    - `P_ISO` and `P_BG` are chunk-normalized proxies, not actual probabilities
+    - `P_MEM` was tied to a hard-coded stream track instead of a data-driven refinement
+    - background CMD was built from a fixed off-stream strip and can be biased by local depth variation
+  - new `compute_membership.py` now:
+    - computes a real photometric posterior from `logp_iso` vs `logp_bg`
+    - builds local background CMD PDFs in `phi1` and `PSFDEPTH_G` bins
+    - refits a data-driven stream track from the first-pass CMD posterior before forming the final spatial prior
+  - NERSC `desi_env` contains the required packages: `numpy`, `astropy`, `dustmaps`, `gala`
+  - real-data smoke sample of 200,000 rows ran successfully and produced:
+    - `P_ISO > 0.5`: 10,753 stars
+    - `P_MEM > 0.5`: 1,544 stars
+    - extracted track table with 27 `phi1` bins
+- Validation result:
+  - local syntax validation passed
+  - local toy end-to-end smoke path passed structurally
+  - NERSC real-data smoke run completed successfully on the small sample
+- Remaining issues:
+  - full raw-catalog pre-selection and full membership production still need a compute-node run
+  - `extract_stream_track.py` currently uses weighted moments; a richer Gaussian+background fit can be restored later if needed
+  - residual extinction correction is still inherited from the notebook and should be revisited if CMD residuals remain obvious
+- Next step: submit the full real-stream detection run on a NERSC compute node and inspect the resulting track and maps
+
 - Task: initialize local Pal 5 rebuild workspace and recover remote context
 - Files changed: `README.md`, `WORKLOG.md`, `PLAN.md`
 - Commands run: `git status --short --branch`; `git branch --show-current`; `git fetch --all --prune`; `git log --oneline --decorate --graph -n 15 --all`; `ls -la`; multiple `ssh yunao@perlmutter.nersc.gov ...` inspections under `/pscratch/sd/y/yunao`
