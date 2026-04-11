@@ -3,7 +3,7 @@
 #SBATCH -q shared
 #SBATCH -C cpu
 #SBATCH -N 1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH -t 02:00:00
 #SBATCH -o logs/pal5_detect_%j.out
