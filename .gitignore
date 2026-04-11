@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
+tmp/
+outputs/
+logs/
+_tmp_prob_cols/
