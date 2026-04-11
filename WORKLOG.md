@@ -2,6 +2,23 @@
 
 ## 2026-04-11
 
+- Task: publish the rebuilt pipeline and launch the full NERSC production run
+- Files changed: `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `gh repo create palomar5-desi --private --source=. --remote=origin --push`
+  - `sbatch -A desi -q shared -C cpu -N 1 -t 04:00:00 run_real_detection.slurm ...`
+  - `squeue -j 51398459`
+- Key findings:
+  - GitHub repo created and pushed: `https://github.com/xiaoyunao/palomar5-desi`
+  - full NERSC job submitted successfully on shared CPU queue
+  - current full-run job id is `51398459`
+  - current queue state after submission: `PD (Priority)`
+- Validation result: repository push succeeded; batch submission accepted by Slurm
+- Remaining issues:
+  - wait for full production outputs in `/pscratch/sd/y/yunao/pal5_rebuild_outputs`
+  - inspect job log once the run starts
+- Next step: monitor job `51398459`, then inspect `final_glt24_membership.fits` and `pal5_stream_track.fits`
+
 - Task: scriptify the real-stream detection pipeline and validate it on NERSC
 - Files changed: `scripts/pal5_common.py`, `scripts/preselect_catalog.py`, `scripts/apply_residual_extinction.py`, `scripts/compute_membership.py`, `scripts/extract_stream_track.py`, `scripts/run_real_detection.sh`, `scripts/run_real_detection.slurm`
 - Commands run:

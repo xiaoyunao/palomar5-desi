@@ -35,7 +35,7 @@ Rebuild the Palomar 5 real-stream detection workflow from raw DESI data and theo
 
 ## Next Recommended Steps
 
-1. Launch the full NERSC compute-node run from raw DESI input through `final_glt24_membership.fits`.
+1. Monitor NERSC job `51398459` until it produces the full outputs under `/pscratch/sd/y/yunao/pal5_rebuild_outputs`.
 2. Inspect the full-catalog `P_ISO` and `P_MEM` distributions and the extracted stream track.
 3. If needed, tune:
    - `logk_cmd`
