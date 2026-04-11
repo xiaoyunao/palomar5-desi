@@ -27,3 +27,8 @@ python scripts/compute_membership.py \
 python scripts/extract_stream_track.py \
   --input "$WORKDIR/outputs/final_glt24_membership.fits" \
   --output "$WORKDIR/outputs/pal5_stream_track.fits"
+
+python scripts/plot_detection_results.py \
+  --catalog "$WORKDIR/outputs/final_glt24_membership.fits" \
+  --track "$WORKDIR/outputs/pal5_stream_track.fits" \
+  --outdir "$WORKDIR/outputs/plots"
