@@ -12,6 +12,7 @@ set -euo pipefail
 cd "${SLURM_SUBMIT_DIR}"
 mkdir -p logs
 
-source /global/common/software/nersc9/python/miniforge3/etc/profile.d/conda.sh || true
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate desi_env
 
-bash scripts/run_real_detection.sh "$@"
+bash ./run_real_detection.sh "$@"
