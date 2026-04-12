@@ -2,6 +2,54 @@
 
 ## 2026-04-12
 
+- Task: 记录并执行 step 2 Bonaca-style baseline member selection。
+- Files changed: `PAL5_STEP2_CODEX_INSTRUCTIONS.md`, `pal5_step2_member_selection.py`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `sed -n '1,260p' /Users/island/Desktop/PAL5_STEP2_CODEX_INSTRUCTIONS.md`
+  - `sed -n '1,980p' /Users/island/Desktop/pal5_step2_member_selection.py`
+  - `conda env list`
+  - `'/Users/island/opt/anaconda3/bin/python' -m py_compile pal5_step2_member_selection.py`
+  - `'/Users/island/opt/anaconda3/bin/python' pal5_step2_member_selection.py --input final_g25_preproc.fits --iso pal5.dat --outdir step2_outputs`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' pal5_step2_member_selection.py --input final_g25_preproc.fits --iso pal5.dat --outdir step2_outputs`
+  - `sed -n '1,220p' /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_cutflow.txt`
+  - `cat /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_alignment.json`
+- Key findings:
+  - 用户提供的 step 2 目标与 handoff 一致：当前阶段应做 Bonaca-style strict baseline，而不是 matched-filter / probability sample。
+  - base 环境不可直接用于 step 2：`matplotlib` 被错误解析为 namespace package，运行时报 `AttributeError: module 'matplotlib' has no attribute 'use'`。
+  - `astro`、`asteroid`、`csst` 三个 conda 环境都能正确导入 `numpy + matplotlib + astropy`；最终使用 `astro` 成功运行。
+  - step 2 运行目录为 `/Users/island/Desktop/Pal5`，输出写入 `step2_outputs/`。
+  - 本次 strict sample 结果：
+    - input = 13,520,015
+    - strict_mag = 3,916,769
+    - z_locus = 2,525,070
+    - strict_selected = 444,232
+  - nuisance alignment 最优值：
+    - `dmu = -0.11`
+    - `dc0 = +0.01`
+    - `dc1 = +0.02`
+    - `dm_cluster_best = 16.725`
+    - `dm_trailing_best = 16.6986`
+    - `dm_leading_best = 16.2838`
+- Validation result:
+  - `pal5_step2_member_selection.py` 语法检查通过。
+  - 实际运行成功，生成：
+    - `/Users/island/Desktop/Pal5/step2_outputs/pal5_step2_strict_members.fits`
+    - `/Users/island/Desktop/Pal5/step2_outputs/pal5_step2_alignment.json`
+    - `/Users/island/Desktop/Pal5/step2_outputs/pal5_step2_cutflow.txt`
+    - `/Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json`
+    - `/Users/island/Desktop/Pal5/step2_outputs/plots_step2/*.png`
+- Remaining issues:
+  - 还未人工检查 step 2 关键图像质量。
+  - 还未判断这版 strict sample 是否足够作为 morphology baseline。
+  - 临时 chunk 文件仍保留在 `/Users/island/Desktop/Pal5/step2_outputs/tmp_step2_chunks/`。
+- Next step:
+  - 优先检查：
+    - `qc_cluster_cmd_alignment.png`
+    - `qc_color_color_zlocus.png`
+    - `qc_selected_density_phi12.png`
+    - `qc_selected_cmd_gr_g.png`
+  - 确认 strict sample 质量后，再讨论是否进入 smoother `DM(phi1)` 模型。
+
 - Task: 按 handoff 重建 Palomar 5 代码仓库，并把项目当前的科学目标、约束和阶段计划重新落到仓库文档里。
 - Files changed: `README.md`, `WORKLOG.md`, `PLAN.md`, `.gitignore`, `pal5_preprocess_step1.py`
 - Commands run:

@@ -179,21 +179,18 @@ Phase 0 预期输出：
 - 仓库已恢复基础结构。
 - `pal5_preprocess_step1.py` 已重建并通过语法检查。
 - 运行目录中已有一版旧预处理产物，但当前仓库还没有记录一次正式 Phase 0 rerun。
+- step 2 strict member-selection 脚本与说明已纳入仓库。
+- step 2 已在 `/Users/island/Desktop/Pal5` 用 `astro` 环境成功运行一次，得到 `444,232` 个 strict members。
 
 ## Immediate next steps
 
-1. 视需要将预处理脚本 I/O 路径参数化，便于从仓库控制、在运行目录执行。
-2. 从运行环境实际执行 `pal5_preprocess_step1.py`。
-3. 记录 run note：
-   - 输入文件
-   - 总行数
-   - cutflow
-   - 输出文件名
-   - warning / error
-4. 人工检查：
-   - RA-Dec density
-   - `phi1, phi2` density
-   - CMD
-   - color-color
-   - depth histogram
-5. 预处理确认后，进入 strict member-selection baseline。
+1. 人工检查 step 2 的关键产物：
+   - `pal5_step2_cutflow.txt`
+   - `pal5_step2_alignment.json`
+   - `qc_cluster_cmd_alignment.png`
+   - `qc_color_color_zlocus.png`
+   - `qc_selected_density_phi12.png`
+   - `qc_selected_cmd_gr_g.png`
+2. 判断这版 strict sample 是否足够作为 Bonaca-style baseline。
+3. 若质量可接受，进入 smoother `DM(phi1)` 模型设计。
+4. 随后进入 improved background / 1D morphology 阶段。
