@@ -1,5 +1,57 @@
 # WORKLOG
 
+## 2026-04-13
+
+- Task: 记录并执行 step 3 Bonaca-style 1D spatial modeling，并对允许的第一个局部窗口参数做对照测试。
+- Files changed: `PAL5_STEP3_CODEX_INSTRUCTIONS.md`, `pal5_step3_bonaca_1d_model.py`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `sed -n '1,260p' /Users/island/Desktop/PAL5_STEP3_CODEX_INSTRUCTIONS.md`
+  - `sed -n '1,980p' /Users/island/Desktop/pal5_step3_bonaca_1d_model.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile pal5_step3_bonaca_1d_model.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' pal5_step3_bonaca_1d_model.py --input step2_outputs/pal5_step2_strict_members.fits --outdir step3_outputs`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' pal5_step3_bonaca_1d_model.py --input step2_outputs/pal5_step2_strict_members.fits --outdir step3_outputs_hw15 --pass2-phi2-halfwidth 1.5`
+  - `cat /Users/island/Desktop/Pal5/step3_outputs/pal5_step3_summary.json`
+  - `cat /Users/island/Desktop/Pal5/step3_outputs_hw15/pal5_step3_summary.json`
+- Key findings:
+  - step 3 依赖在 `astro` 环境中齐全：`numpy`、`matplotlib`、`astropy`、`scipy` 均可直接导入。
+  - 默认 step 3 运行已完成，输出写入 `/Users/island/Desktop/Pal5/step3_outputs/`。
+  - 默认配置结果：
+    - `n_bins = 41`
+    - `n_success = 14`
+    - trailing 二次 track 拟合存在，leading 二次拟合为 `null`
+    - `max_width_leading = 0.482`
+    - `max_width_trailing = 0.553`
+  - 失败 bin 主要不是缺星，而是 BFGS 返回 `Desired error not necessarily achieved due to precision loss.`；很多失败 bin 仍有有限的 `mu`、`sigma`。
+  - 按 step 3 说明允许的第一步微调，只将 `pass2-phi2-halfwidth` 从 `1.75` 缩到 `1.5`，不改样本、不改模型。
+  - `step3_outputs_hw15/` 对照结果：
+    - `n_success = 15`
+    - leading / trailing 二次 track 拟合都存在
+    - `max_width_leading = 0.415`
+    - `max_width_trailing = 0.481`
+  - 这版仅带来轻微改善，仍未达到“多数 bin 成功”的理想状态，因此当前更像 baseline exploratory run，而不是最终可接受的 strict morphology baseline。
+- Validation result:
+  - `pal5_step3_bonaca_1d_model.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step3_outputs/pal5_step3_profiles.fits`
+    - `/Users/island/Desktop/Pal5/step3_outputs/pal5_step3_summary.json`
+    - `/Users/island/Desktop/Pal5/step3_outputs/qc_step3_*.png`
+    - `/Users/island/Desktop/Pal5/step3_outputs_hw15/pal5_step3_profiles.fits`
+    - `/Users/island/Desktop/Pal5/step3_outputs_hw15/pal5_step3_summary.json`
+    - `/Users/island/Desktop/Pal5/step3_outputs_hw15/qc_step3_*.png`
+- Remaining issues:
+  - 需要人工看关键图，判断默认版和 `hw15` 版哪一版更接近可用基线。
+  - 若图像仍显示明显 background-dominated 或 ridge miss，下一允许动作才是考虑 `--min-stars 40` 或更换 `phi1-step`。
+  - 当前不应改 step 2 sample，也不应提前引入 completeness / template background。
+- Next step:
+  - 优先人工检查：
+    - `step3_outputs/qc_step3_density_phi12.png`
+    - `step3_outputs/qc_step3_track.png`
+    - `step3_outputs/qc_step3_width.png`
+    - `step3_outputs/qc_step3_linear_density.png`
+    - `step3_outputs/qc_step3_example_local_fits.png`
+    - 与 `step3_outputs_hw15/` 对照比较
+  - 然后再决定是否继续允许范围内的第二个 tweak。
+
 ## 2026-04-12
 
 - Task: 记录并执行 step 2 Bonaca-style baseline member selection。

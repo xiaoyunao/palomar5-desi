@@ -181,16 +181,22 @@ Phase 0 预期输出：
 - 运行目录中已有一版旧预处理产物，但当前仓库还没有记录一次正式 Phase 0 rerun。
 - step 2 strict member-selection 脚本与说明已纳入仓库。
 - step 2 已在 `/Users/island/Desktop/Pal5` 用 `astro` 环境成功运行一次，得到 `444,232` 个 strict members。
+- step 3 Bonaca-style 1D spatial model 脚本与说明已纳入仓库。
+- step 3 已完成两次运行：
+  - 默认版 `step3_outputs/`: `n_success = 14 / 41`
+  - `--pass2-phi2-halfwidth 1.5` 对照版 `step3_outputs_hw15/`: `n_success = 15 / 41`
+- 当前 step 3 还不足以视为稳定 baseline，需要先对图像和失败模式做人工判断。
 
 ## Immediate next steps
 
-1. 人工检查 step 2 的关键产物：
-   - `pal5_step2_cutflow.txt`
-   - `pal5_step2_alignment.json`
-   - `qc_cluster_cmd_alignment.png`
-   - `qc_color_color_zlocus.png`
-   - `qc_selected_density_phi12.png`
-   - `qc_selected_cmd_gr_g.png`
-2. 判断这版 strict sample 是否足够作为 Bonaca-style baseline。
-3. 若质量可接受，进入 smoother `DM(phi1)` 模型设计。
-4. 随后进入 improved background / 1D morphology 阶段。
+1. 人工检查 step 3 默认版与 `hw15` 版：
+   - `qc_step3_density_phi12.png`
+   - `qc_step3_track.png`
+   - `qc_step3_width.png`
+   - `qc_step3_linear_density.png`
+   - `qc_step3_example_local_fits.png`
+2. 判断哪一版更接近可接受的 Bonaca-style baseline。
+3. 若仍不够稳，只按 step 3 说明允许的顺序继续小调：
+   - 先考虑 `--min-stars 40`
+   - 再考虑 `--phi1-step 1.0`
+4. 只有当 step 3 稳下来后，才进入 smoother `DM(phi1)` 与 improved background 阶段。
