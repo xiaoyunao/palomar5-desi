@@ -31,7 +31,7 @@ Phase 0 preprocessing baseline:
 
 ## Main script
 
-- `pal5_preprocess_glt25.py`
+- `pal5_preprocess_step1.py`
 
 ## Expected outputs from a real run
 
@@ -45,7 +45,7 @@ Phase 0 preprocessing baseline:
 
 For code changes, start with:
 
-1. `python -m py_compile pal5_preprocess_glt25.py`
+1. `python -m py_compile pal5_preprocess_step1.py`
 
 For a real preprocessing run, execute in the runtime directory or with explicit
 output paths after confirming the input FITS path is available.
