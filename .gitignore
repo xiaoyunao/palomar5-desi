@@ -1,0 +1,14 @@
+__pycache__/
+.ipynb_checkpoints/
+
+*.fits
+*.fit
+*.fz
+*.png
+*.pdf
+*.log
+
+tmp_pal5_preproc/
+diagnostics_pal5_preproc/
+plots_preproc/
+reports_preproc/
