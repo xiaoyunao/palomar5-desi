@@ -1,0 +1,11 @@
+Pal 5 step 4 refined-distance member-selection cut-flow
+INPUT_FITS = final_g25_preproc.fits
+ISO_FILE   = pal5.dat
+OUTPUT_FITS = step4_outputs/pal5_step4_refined_members.fits
+
+input                   :     13520015   (100.0000%)
+finite_grz              :     13520015   (100.0000%)
+strict_mag              :      3916769   ( 28.9702%)
+z_locus                 :      2525070   ( 18.6765%)
+iso_variable_dm         :       460278   (  3.4044%)
+refined_selected        :       460278   (  3.4044%)

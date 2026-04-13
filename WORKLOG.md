@@ -2,6 +2,96 @@
 
 ## 2026-04-13
 
+- Task: 执行新的 step 4 refined `DM(phi1)` selection，并基于 refined members 重跑 step 3b / step 3c。
+- Files changed: `PAL5_STEP4_CODEX_INSTRUCTIONS.md`, `pal5_step4_refined_dm_selection.py`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `python -m py_compile pal5_step4_refined_dm_selection.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step4_refined_dm_selection.py --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --iso /Users/island/Desktop/Pal5/pal5.dat --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --mu-prior /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --strict-fits /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_strict_members.fits --outdir /Users/island/Desktop/Pal5/step4_outputs`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step3b_selection_aware_1d_model.py --signal /Users/island/Desktop/Pal5/step4_outputs/pal5_step4_refined_members.fits --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --eta-mode control --sampler map --outdir /Users/island/Desktop/Pal5/step4_step3b_control_map`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step3b_selection_aware_1d_model.py --signal /Users/island/Desktop/Pal5/step4_outputs/pal5_step4_refined_members.fits --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --eta-mode control --sampler emcee --nwalkers 48 --burn 256 --steps 512 --outdir /Users/island/Desktop/Pal5/step4_step3b_control_emcee`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step3c_bonaca_comparison.py --profiles-map /Users/island/Desktop/Pal5/step4_step3b_control_map/pal5_step3b_profiles.csv --summary-map /Users/island/Desktop/Pal5/step4_step3b_control_map/pal5_step3b_summary.json --label-map 'refined DM + control + MAP' --profiles-alt /Users/island/Desktop/Pal5/step4_step3b_control_emcee/pal5_step3b_profiles.csv --summary-alt /Users/island/Desktop/Pal5/step4_step3b_control_emcee/pal5_step3b_summary.json --label-alt 'refined DM + control + emcee' --strict-fits /Users/island/Desktop/Pal5/step4_outputs/pal5_step4_refined_members.fits --outdir /Users/island/Desktop/Pal5/step4_step3c_outputs`
+  - `sed -n '1,240p' /Users/island/Desktop/Pal5/step4_outputs/pal5_step4_summary.json`
+  - `sed -n '1,80p' /Users/island/Desktop/Pal5/step4_outputs/pal5_step4_dm_anchors.csv`
+  - `sed -n '1,240p' /Users/island/Desktop/Pal5/step4_step3b_control_map/pal5_step3b_summary.json`
+  - `sed -n '1,240p' /Users/island/Desktop/Pal5/step4_step3b_control_emcee/pal5_step3b_summary.json`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step4_step3c_outputs/pal5_step3c_summary.json`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step4_step3c_outputs/pal5_step3c_report.md`
+- Key findings:
+  - step 4 refined selection 运行成功，`15 / 15` 个 coarse DM anchors 全部成功。
+  - refined strict member sample 为 `460,278`，相对 step 2 的 `444,232` 略增，没有发生异常塌缩。
+  - 插值后 `DM(phi1)` 范围为 `16.418` 到 `16.962`；代表点：
+    - `phi1 = -15`: `16.749`
+    - `phi1 = 0`: `16.689`
+    - `phi1 = +8`: `16.684`
+  - refined members 上的 step 3b `control + MAP` 基本健康：
+    - `n_success = 40 / 41`
+    - `n_success_excluding_cluster = 38`
+    - `max_width_leading = 0.293`
+    - `max_width_trailing = 0.486`
+  - 与旧 baseline (`control + MAP`) 相比，refined `DM(phi1)` 的主要改善是：
+    - integrated stars within `|phi1| < 8`: `2872 -> 2912`
+    - near-cluster width: `0.118 -> 0.123`
+    - trailing outer max width: `0.554 -> 0.486`
+    - trailing/leading within `|phi1| < 8`: `1.675 -> 1.633`
+  - 但 leading fan 宽度几乎没有改善：
+    - leading max width in `[5, 8]`: `0.287 -> 0.293`
+    - 仍明显低于 Bonaca 参考的 `~0.4`
+  - refined `control + emcee` 版仍更宽，但没有成为更好的 formal baseline：
+    - `n_success = 38 / 41`
+    - `leading_width_max_5to8 = 0.346`
+    - `trailing_width_max_m15to5 = 0.556`
+  - 因此，这一轮 step 4 说明：
+    - refined `DM(phi1)` 确实让 integrated counts 和 outer trailing morphology 更接近 Bonaca
+    - 但当前 leading fan 不足的问题并不主要由 step 2 的 two-arm baseline DM 造成
+- Validation result:
+  - `pal5_step4_refined_dm_selection.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step4_outputs/pal5_step4_refined_members.fits`
+    - `/Users/island/Desktop/Pal5/step4_outputs/pal5_step4_summary.json`
+    - `/Users/island/Desktop/Pal5/step4_outputs/pal5_step4_dm_anchors.csv`
+    - `/Users/island/Desktop/Pal5/step4_outputs/pal5_step4_dm_track.csv`
+    - `/Users/island/Desktop/Pal5/step4_outputs/plots_step4/qc_step4_*.png`
+    - `/Users/island/Desktop/Pal5/step4_step3b_control_map/pal5_step3b_summary.json`
+    - `/Users/island/Desktop/Pal5/step4_step3b_control_emcee/pal5_step3b_summary.json`
+    - `/Users/island/Desktop/Pal5/step4_step3c_outputs/pal5_step3c_summary.json`
+    - `/Users/island/Desktop/Pal5/step4_step3c_outputs/pal5_step3c_report.md`
+- Remaining issues:
+  - refined `DM(phi1)` 没有把 leading width `[5, 8]` 推到 `~0.4 deg`。
+  - `|phi1| < 5` 的 trailing/leading 比仍偏高到 `1.84`，并未向 Bonaca `~1.5` 明显收敛。
+  - `phi1 ~ -10.25 deg` 的 trailing 外侧宽 bin 仍然偏宽，只是比旧 baseline 缓和。
+- Next step:
+  - 将 `step4_step3c_outputs/` 作为 refined-DM 版本的正式对照包带回科学讨论。
+  - 若继续升级，优先考虑 smoother global `DM(phi1)` / completeness / background，而不是继续在 coarse-anchor bookkeeping 上打转。
+
+- Task: 新会话恢复项目上下文，确认上次卡住时遗留的仓库状态与 step 4 草稿文件。
+- Files changed: `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `git status --short --branch`
+  - `git branch --show-current`
+  - `git fetch --all --prune`
+  - `git log --oneline --decorate --graph -n 15 --all`
+  - `git rev-list --left-right --count origin/main...HEAD`
+  - `sed -n '1,220p' WORKLOG.md`
+  - `sed -n '1,220p' PLAN.md`
+  - `sed -n '1,220p' PAL5_STEP4_CODEX_INSTRUCTIONS.md`
+  - `sed -n '1,260p' pal5_step4_refined_dm_selection.py`
+- Key findings:
+  - 当前分支是 `main`，相对 `origin/main` 为 `ahead 1`，未分叉。
+  - 仓库中存在两个未跟踪文件：
+    - `PAL5_STEP4_CODEX_INSTRUCTIONS.md`
+    - `pal5_step4_refined_dm_selection.py`
+  - 这两个文件内容一致指向下一阶段的 step 4：基于当前 `control + MAP` baseline 做 refined `DM(phi1)` selection，并再串联 step 3b / step 3c。
+  - 现有 `WORKLOG.md` 与 `PLAN.md` 都停在 step 3c 完成后的状态，因此项目上下文已成功恢复，没有发现远端新提交覆盖本地工作的风险。
+- Validation result:
+  - 已完成仓库同步检查、历史恢复和文档恢复。
+  - 未对代码逻辑做改动，仅记录当前状态。
+- Remaining issues:
+  - step 4 相关文件尚未纳入 git。
+  - step 4 还未实际运行，也未验证其输入路径与脚本参数是否和当前仓库状态完全一致。
+- Next step:
+  - 若继续推进，优先检查 step 4 所需输入文件命名是否与当前仓库/运行目录一致。
+  - 然后在运行目录执行 step 4，产出 refined member catalog，再重跑 step 3b / step 3c。
+
 - Task: 执行 step 3c，把当前最稳的 `control + MAP` step 3b 结果整理为 Bonaca-style 对照版本，并保留 `control + emcee` 作为后验检查。
 - Files changed: `PAL5_STEP3C_CODEX_INSTRUCTIONS.md`, `pal5_step3c_bonaca_comparison.py`, `WORKLOG.md`, `PLAN.md`
 - Commands run:

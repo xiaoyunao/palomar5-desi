@@ -198,17 +198,45 @@ Phase 0 预期输出：
   - `step3c_outputs/` 已生成 figure、metrics、summary、report
   - 当前正式 baseline 应采用 `control + MAP`
   - `control + emcee` 保留为 posterior sanity check
+- 新会话恢复确认：
+  - 仓库当前 `main` 相对 `origin/main` 为 `ahead 1`
+  - 存在未跟踪的 step 4 草稿文件：
+    - `PAL5_STEP4_CODEX_INSTRUCTIONS.md`
+    - `pal5_step4_refined_dm_selection.py`
+  - 项目实际停在“step 4 已起草但尚未运行、尚未提交”的状态
+- step 4 refined-DM selection 已完成，并已串联 step 3b / step 3c：
+  - `step4_outputs/` 已生成 refined members、DM anchors、DM track 和 QC 图
+  - `step4_step3b_control_map/`: `n_success = 40 / 41`, `n_success_excluding_cluster = 38`
+  - `step4_step3b_control_emcee/`: `n_success = 38 / 41`, `n_success_excluding_cluster = 36`
+  - `step4_step3c_outputs/` 已生成 figure、metrics、summary、report
+- refined-DM 版本相对旧 baseline 的主要变化：
+  - `|phi1| < 8` integrated stars: `2872 -> 2912`
+  - near-cluster width: `0.118 -> 0.123`
+  - leading width in `[5, 8]`: `0.287 -> 0.293`，改善极小
+  - trailing outer width near `phi1 ~ -10.25`: `0.554 -> 0.486`
+  - `|phi1| < 5` trailing/leading: `1.75 -> 1.84`，没有改善到 Bonaca `~1.5`
+- 当前结论：
+  - refined coarse-anchor `DM(phi1)` 值得保留为一次重要对照，因为它改善了 integrated counts 和 outer trailing width
+  - 但 leading fan 偏窄的问题并未因此解决，因此下一阶段瓶颈更可能在 completeness / background / 更平滑的全流 distance model，而不是 step 2 的 two-arm DM baseline 本身
 
 ## Immediate next steps
 
-1. 以 `step3c_outputs/` 的 Bonaca-style 整理结果作为当前讨论入口：
+1. 以 `step4_step3c_outputs/` 的 refined-DM 对照结果作为下一轮科学讨论入口：
    - `pal5_step3c_report.md`
    - `pal5_step3c_summary.json`
    - `pal5_step3c_metrics.csv`
    - `fig_step3c_bonaca_profiles.png`
    - `fig_step3c_asymmetry.png`
    - `fig_step3c_baseline_vs_alternate.png`
-2. 当前默认科学基线固定为：
+2. 当前默认 formal baseline 仍固定为：
    - `control + MAP` = formal baseline
    - `control + emcee` = posterior sanity check
-3. 下一阶段优先讨论 smoother `DM(phi1)` 与后续 completeness / background 升级，而不是再改变 baseline bookkeeping 逻辑。
+3. refined-DM 版本保留为关键对照：
+   - 更接近 Bonaca 的 integrated counts
+   - 更缓和的 outer trailing width
+   - 但并未解决 leading fan 偏窄
+4. 下一阶段优先讨论：
+   - smoother global `DM(phi1)` model
+   - completeness / effective-area bookkeeping
+   - empirical background template
+5. 不再继续只围绕 coarse-anchor step 4 做局部微调，除非 QC 图显示明显网格边界或条带选择问题。

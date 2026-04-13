@@ -1,0 +1,36 @@
+{
+  "signal": "/Users/island/Desktop/Pal5/step4_outputs/pal5_step4_refined_members.fits",
+  "preproc": "/Users/island/Desktop/Pal5/final_g25_preproc.fits",
+  "step2_summary": "/Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json",
+  "iso": "/Users/island/Desktop/Pal5/pal5.dat",
+  "mu_prior_file": "/Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt",
+  "eta_mode": "control",
+  "sampler": "emcee",
+  "have_emcee": true,
+  "n_input_signal": 460278,
+  "n_control_total": 470330,
+  "n_zparent_total": 2525070,
+  "phi1_min": -20.0,
+  "phi1_max": 10.0,
+  "phi1_step": 0.75,
+  "window_scale": 1.5,
+  "window_width_phi1": 1.125,
+  "fit_halfwidth": 1.5,
+  "min_signal_stars": 60,
+  "n_bins": 41,
+  "n_success": 38,
+  "n_success_excluding_cluster": 36,
+  "track_poly_trailing": [
+    0.008158479307593634,
+    0.004537278174516729,
+    -0.3721903134567864
+  ],
+  "track_poly_leading": [
+    0.01702638123574836,
+    0.09196430070648144,
+    0.17950303005038462
+  ],
+  "max_width_leading": 0.3462031755834366,
+  "max_width_trailing": 0.5557589616065048,
+  "integrated_stream_stars_excluding_cluster": 6413.682364281147
+}

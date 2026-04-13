@@ -1,0 +1,47 @@
+{
+  "input": "final_g25_preproc.fits",
+  "iso": "pal5.dat",
+  "step2_summary": "step2_outputs/pal5_step2_summary.json",
+  "mu_prior": "step3b_outputs_control/pal5_step3b_mu_prior.txt",
+  "output_members": "step4_outputs/pal5_step4_refined_members.fits",
+  "n_zparent_total": 2525069,
+  "n_anchor_total": 15,
+  "n_anchor_success": 15,
+  "phi1_anchor_min": -19.0,
+  "phi1_anchor_max": 9.0,
+  "anchor_step": 2.0,
+  "anchor_window_half": 1.5,
+  "on_halfwidth": 0.4,
+  "off_inner": 0.8,
+  "off_outer": 1.6,
+  "dm_scan_half": 0.4,
+  "dm_scan_step": 0.01,
+  "alignment": {
+    "dmu": -0.10999999999999999,
+    "dc0": 0.009999999999999981,
+    "dc1": 0.020000000000000004,
+    "dm_cluster_best": 16.725,
+    "dm_trailing_best": 16.698639180087966,
+    "dm_leading_best": 16.283768004764145
+  },
+  "cutflow": {
+    "input": 13520015,
+    "finite_grz": 13520015,
+    "strict_mag": 3916769,
+    "z_locus": 2525070,
+    "iso_variable_dm": 460278,
+    "refined_selected": 460278
+  },
+  "dm_track": {
+    "dm_cluster_best": 16.725,
+    "dm_trailing_best_step2": 16.698639180087966,
+    "dm_leading_best_step2": 16.283768004764145,
+    "dm_raw_min": 16.37863918008798,
+    "dm_raw_max": 17.098639180088092,
+    "dm_interp_min": 16.418239465603158,
+    "dm_interp_max": 16.96225771555155,
+    "dm_at_phi1_minus15": 16.748557510391432,
+    "dm_at_phi1_0": 16.689446701780785,
+    "dm_at_phi1_plus8": 16.683768004764126
+  }
+}
