@@ -2,6 +2,42 @@
 
 ## 2026-04-13
 
+- Task: 查找并启用 `emcee`，对 step 3b 的优选 `control` 模式补跑 posterior-sampling 版本。
+- Files changed: `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `conda env list`
+  - `'/Users/island/opt/anaconda3/bin/python' - <<'PY' ... import emcee ...`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m pip install emcee`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' pal5_step3b_selection_aware_1d_model.py --signal step2_outputs/pal5_step2_strict_members.fits --preproc final_g25_preproc.fits --step2-summary step2_outputs/pal5_step2_summary.json --iso pal5.dat --mu-prior-file step3_outputs_hw15/pal5_step3_pass1_prior_track.txt --eta-mode control --sampler emcee --nwalkers 48 --burn 256 --steps 512 --outdir step3b_outputs_control_emcee`
+  - `cat /Users/island/Desktop/Pal5/step3b_outputs_control_emcee/pal5_step3b_summary.json`
+- Key findings:
+  - `emcee` 原本只装在 `base` 环境里；但 `base` 仍然不适合跑项目脚本，因为 `matplotlib` 是异常 namespace package。
+  - 已将 `emcee 3.1.6` 安装到可稳定运行项目脚本的 `astro` 环境中。
+  - step 3b `control + emcee` 版运行成功，输出写入 `/Users/island/Desktop/Pal5/step3b_outputs_control_emcee/`。
+  - 与 `control` 的 MAP 版比较：
+    - `n_success` 相同，都是 `39 / 41`
+    - `n_success_excluding_cluster` 相同，都是 `37`
+    - 采样版的 width 整体略宽：
+      - MAP: `max_width_leading = 0.287`, `max_width_trailing = 0.554`
+      - emcee: `max_width_leading = 0.358`, `max_width_trailing = 0.750`
+  - 因此，`emcee` 版并没有再提升成功 bin 数，但提供了 sampling-based posterior summary；是否“更好”需要主要看图和误差条，而不是只看成功数。
+- Validation result:
+  - `astro` 环境现在可同时导入 `numpy`、`matplotlib`、`astropy`、`scipy`、`emcee`。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control_emcee/pal5_step3b_profiles.fits`
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control_emcee/pal5_step3b_summary.json`
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control_emcee/qc_step3b_*.png`
+- Remaining issues:
+  - 需要直接比较 `control` MAP 与 `control_emcee` 的关键图，判断 posterior 版是否只是把不确定度放宽，还是也改善了物理合理性。
+  - 当前还不应因为 `emcee` 已可用就默认放弃 MAP 版；文档里也明确优先以物理合理性为准。
+- Next step:
+  - 重点对比：
+    - `step3b_outputs_control/qc_step3b_width.png`
+    - `step3b_outputs_control_emcee/qc_step3b_width.png`
+    - `step3b_outputs_control/qc_step3b_linear_density.png`
+    - `step3b_outputs_control_emcee/qc_step3b_linear_density.png`
+  - 然后决定最终保留 MAP 版还是 `emcee` 版作为当前 step 3b 参考输出。
+
 - Task: 纳入并重跑 step 3b selection-aware 1D model，按文档完成 `control` 与 `control_times_depth` 两组 MAP 运行。
 - Files changed: `PAL5_STEP3B_CODEX_INSTRUCTIONS.md`, `pal5_step3b_selection_aware_1d_model.py`, `WORKLOG.md`, `PLAN.md`
 - Commands run:

@@ -190,6 +190,10 @@ Phase 0 预期输出：
   - `step3b_outputs_control/`: `n_success = 39 / 41`, `n_success_excluding_cluster = 37`
   - `step3b_outputs_control_depth/`: `n_success = 27 / 41`, `n_success_excluding_cluster = 25`
 - 当前最有前景的 baseline 是 `eta-mode = control` 的 step 3b 结果；`control_times_depth` 暂时不如它稳定。
+- `emcee` 已补装到 `astro` 环境，并完成 `step3b_outputs_control_emcee/`：
+  - `n_success = 39 / 41`
+  - `n_success_excluding_cluster = 37`
+  - 与 MAP 版相比，成功 bin 数不变，但 width 整体略宽。
 
 ## Immediate next steps
 
@@ -201,6 +205,7 @@ Phase 0 预期输出：
    - `qc_step3b_linear_density.png`
    - `qc_step3b_example_local_fits.png`
 2. 与 `step3b_outputs_control_depth/` 对照，确认 `control` 模式是否在形态和稳定性上都更优。
-3. 若 `control` 模式图像也合理，则把它作为当前 step 3 baseline，并只在那之后考虑：
-   - `--sampler emcee` 的 posterior refinement
+3. 再将 `step3b_outputs_control/` 与 `step3b_outputs_control_emcee/` 对照，判断是保留：
+   - MAP 版作为主参考
+   - 还是 `emcee` 版作为主参考
 4. 在 step 3b baseline 确认后，再讨论 smoother `DM(phi1)` 与进一步 background/completeness 升级。
