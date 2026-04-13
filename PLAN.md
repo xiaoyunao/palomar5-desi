@@ -186,17 +186,21 @@ Phase 0 预期输出：
   - 默认版 `step3_outputs/`: `n_success = 14 / 41`
   - `--pass2-phi2-halfwidth 1.5` 对照版 `step3_outputs_hw15/`: `n_success = 15 / 41`
 - 当前 step 3 还不足以视为稳定 baseline，需要先对图像和失败模式做人工判断。
+- step 3b selection-aware 脚本与说明已纳入仓库并完成两组文档规定的 MAP 运行：
+  - `step3b_outputs_control/`: `n_success = 39 / 41`, `n_success_excluding_cluster = 37`
+  - `step3b_outputs_control_depth/`: `n_success = 27 / 41`, `n_success_excluding_cluster = 25`
+- 当前最有前景的 baseline 是 `eta-mode = control` 的 step 3b 结果；`control_times_depth` 暂时不如它稳定。
 
 ## Immediate next steps
 
-1. 人工检查 step 3 默认版与 `hw15` 版：
-   - `qc_step3_density_phi12.png`
-   - `qc_step3_track.png`
-   - `qc_step3_width.png`
-   - `qc_step3_linear_density.png`
-   - `qc_step3_example_local_fits.png`
-2. 判断哪一版更接近可接受的 Bonaca-style baseline。
-3. 若仍不够稳，只按 step 3 说明允许的顺序继续小调：
-   - 先考虑 `--min-stars 40`
-   - 再考虑 `--phi1-step 1.0`
-4. 只有当 step 3 稳下来后，才进入 smoother `DM(phi1)` 与 improved background 阶段。
+1. 优先人工检查 `step3b_outputs_control/`：
+   - `qc_step3b_control_density_phi12.png`
+   - `qc_step3b_density_phi12_local.png`
+   - `qc_step3b_track.png`
+   - `qc_step3b_width.png`
+   - `qc_step3b_linear_density.png`
+   - `qc_step3b_example_local_fits.png`
+2. 与 `step3b_outputs_control_depth/` 对照，确认 `control` 模式是否在形态和稳定性上都更优。
+3. 若 `control` 模式图像也合理，则把它作为当前 step 3 baseline，并只在那之后考虑：
+   - `--sampler emcee` 的 posterior refinement
+4. 在 step 3b baseline 确认后，再讨论 smoother `DM(phi1)` 与进一步 background/completeness 升级。

@@ -2,6 +2,57 @@
 
 ## 2026-04-13
 
+- Task: 纳入并重跑 step 3b selection-aware 1D model，按文档完成 `control` 与 `control_times_depth` 两组 MAP 运行。
+- Files changed: `PAL5_STEP3B_CODEX_INSTRUCTIONS.md`, `pal5_step3b_selection_aware_1d_model.py`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `sed -n '1,980p' /Users/island/Desktop/PAL5_STEP3B_CODEX_INSTRUCTIONS.md`
+  - `sed -n '1,980p' /Users/island/Desktop/pal5_step3b_selection_aware_1d_model.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile pal5_step3b_selection_aware_1d_model.py`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' pal5_step3b_selection_aware_1d_model.py --signal step2_outputs/pal5_step2_strict_members.fits --preproc final_g25_preproc.fits --step2-summary step2_outputs/pal5_step2_summary.json --iso pal5.dat --mu-prior-file step3_outputs_hw15/pal5_step3_pass1_prior_track.txt --eta-mode control --sampler map --outdir step3b_outputs_control`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' pal5_step3b_selection_aware_1d_model.py --signal step2_outputs/pal5_step2_strict_members.fits --preproc final_g25_preproc.fits --step2-summary step2_outputs/pal5_step2_summary.json --iso pal5.dat --mu-prior-file step3_outputs_hw15/pal5_step3_pass1_prior_track.txt --eta-mode control_times_depth --sampler map --outdir step3b_outputs_control_depth`
+  - `cat /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_summary.json`
+  - `cat /Users/island/Desktop/Pal5/step3b_outputs_control_depth/pal5_step3b_summary.json`
+- Key findings:
+  - step 3b 初次运行因与现有 `step2_summary.json` 字段不完全兼容而失败：脚本要求 `STRICT_GR_MIN` / `STRICT_GR_MAX`，而我们当前 step 2 summary 未写入这两个键。
+  - 已在 `load_step2_models()` 中补上与 step 2 baseline 一致的兼容默认值：
+    - `STRICT_GMIN = 20.0`
+    - `STRICT_GMAX = 23.0`
+    - `STRICT_GR_MIN = -0.35`
+    - `STRICT_GR_MAX = 1.25`
+  - `astro` 环境仍然可直接运行 step 3b；`emcee` 不可用，因此按文档使用 `--sampler map`。
+  - Run A (`eta-mode = control`) 明显优于旧 step 3 exploratory run：
+    - `n_success = 39 / 41`
+    - `n_success_excluding_cluster = 37`
+    - 非 cluster 成功范围约 `phi1 = -19.25` 到 `+9.25`
+    - leading / trailing polynomial track 都存在
+  - Run B (`eta-mode = control_times_depth`) 明显更差：
+    - `n_success = 27 / 41`
+    - `n_success_excluding_cluster = 25`
+    - 可用范围只到约 `phi1 = +5.5`
+    - trailing / leading width 都被推宽，不如 control-only 稳定
+  - 与 step 3 对比，step 3b `control` 模式已经把“多数 bin 不收敛”的问题大幅缓解，说明 selection-aware control template 起到了核心作用；额外乘 depth template 在当前数据上反而过强。
+- Validation result:
+  - `pal5_step3b_selection_aware_1d_model.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_profiles.fits`
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_summary.json`
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control/qc_step3b_*.png`
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control_depth/pal5_step3b_profiles.fits`
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control_depth/pal5_step3b_summary.json`
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control_depth/qc_step3b_*.png`
+- Remaining issues:
+  - 仍需人工检查 `control` 与 `control_times_depth` 的关键图，确认 `control` 模式在形态上也更合理。
+  - `control` 模式虽然成功 bin 数已显著改善，但 trailing 端仍存在较宽 bin，需要看是否集中于特定局部结构。
+  - 当前未进行 posterior sampling；文档要求只有在 MAP 版物理上合理后才考虑 `emcee`。
+- Next step:
+  - 优先查看 `step3b_outputs_control/` 的：
+    - `qc_step3b_control_density_phi12.png`
+    - `qc_step3b_density_phi12_local.png`
+    - `qc_step3b_width.png`
+    - `qc_step3b_linear_density.png`
+    - `qc_step3b_example_local_fits.png`
+  - 将这些图与 `step3b_outputs_control_depth/` 对照，若无反例，则把 `control` 版作为当前推荐的 step 3b baseline。
+
 - Task: 记录并执行 step 3 Bonaca-style 1D spatial modeling，并对允许的第一个局部窗口参数做对照测试。
 - Files changed: `PAL5_STEP3_CODEX_INSTRUCTIONS.md`, `pal5_step3_bonaca_1d_model.py`, `WORKLOG.md`, `PLAN.md`
 - Commands run:
