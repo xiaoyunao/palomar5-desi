@@ -1,0 +1,11 @@
+Pal 5 step 4b MSTO-weighted refined-distance member-selection cut-flow
+INPUT_FITS = /Users/island/Desktop/Pal5/final_g25_preproc.fits
+ISO_FILE   = /Users/island/Desktop/Pal5/pal5.dat
+OUTPUT_FITS = /Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_refined_members.fits
+
+input                   :     13520015   (100.0000%)
+finite_grz              :     13520015   (100.0000%)
+strict_mag              :      3916769   ( 28.9702%)
+z_locus                 :      2525070   ( 18.6765%)
+iso_variable_dm         :       451842   (  3.3420%)
+refined_selected        :       451842   (  3.3420%)

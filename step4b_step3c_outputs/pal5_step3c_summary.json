@@ -1,0 +1,84 @@
+{
+  "baseline": {
+    "label": "step4b MSTO DM + control + MAP",
+    "n_bins": 41,
+    "n_success": 39,
+    "n_success_excluding_cluster": 37,
+    "trailing_extent_deg": 20.0,
+    "leading_extent_deg": 10.0,
+    "integrated_total_abs8": 2842.5510728576646,
+    "integrated_trailing_abs8": 1786.875616174908,
+    "integrated_leading_abs8": 1055.6754566827558,
+    "trailing_to_leading_abs8": 1.692637263529645,
+    "integrated_total_abs5": 2144.174073029215,
+    "integrated_trailing_abs5": 1380.3964532412206,
+    "integrated_leading_abs5": 763.7776197879946,
+    "trailing_to_leading_abs5": 1.807327705706255,
+    "near_cluster_width_deg": 0.1237220216367753,
+    "leading_width_max_5to8_deg": 0.3133252367194033,
+    "leading_width_max_5to8_phi1": 7.0,
+    "trailing_width_max_m15to5_deg": 0.4647960625139063,
+    "trailing_width_max_m15to5_phi1": -10.25
+  },
+  "alternate": {
+    "label": "step4b MSTO DM + control + emcee",
+    "n_bins": 41,
+    "n_success": 40,
+    "n_success_excluding_cluster": 38,
+    "trailing_extent_deg": 20.0,
+    "leading_extent_deg": 10.0,
+    "integrated_total_abs8": 2839.647094643157,
+    "integrated_trailing_abs8": 1773.7545156792187,
+    "integrated_leading_abs8": 1065.8925789639384,
+    "trailing_to_leading_abs8": 1.6641025096575224,
+    "integrated_total_abs5": 2187.6266771495,
+    "integrated_trailing_abs5": 1372.3246367466115,
+    "integrated_leading_abs5": 815.3020404028889,
+    "trailing_to_leading_abs5": 1.6832101095545706,
+    "near_cluster_width_deg": 0.12397106975531094,
+    "leading_width_max_5to8_deg": 0.3752456824751625,
+    "leading_width_max_5to8_phi1": 7.0,
+    "trailing_width_max_m15to5_deg": 0.5162758922123027,
+    "trailing_width_max_m15to5_phi1": -10.25
+  },
+  "bonaca_reference": {
+    "g_mag_range": "20 < g0 < 23",
+    "total_stream_stars_excluding_progenitor": 3000.0,
+    "total_stream_stars_excluding_progenitor_err": 100.0,
+    "extent_trailing_deg": 16.0,
+    "extent_leading_deg": 8.0,
+    "trailing_to_leading_ratio_within_5deg": 1.5,
+    "cluster_width_deg": 0.15,
+    "leading_fan_width_deg": 0.4,
+    "leading_fan_phi1_deg": 7.0,
+    "prominent_gap_phi1_deg": [
+      -7.0,
+      3.0
+    ],
+    "track_wiggle_phi1_deg": [
+      -13.0,
+      -4.5,
+      3.5
+    ]
+  },
+  "input_files": {
+    "profiles_map": "/Users/island/Desktop/Pal5/step4b_step3b_outputs_control/pal5_step3b_profiles.csv",
+    "summary_map": "/Users/island/Desktop/Pal5/step4b_step3b_outputs_control/pal5_step3b_summary.json",
+    "profiles_alt": "/Users/island/Desktop/Pal5/step4b_step3b_outputs_control_emcee/pal5_step3b_profiles.csv",
+    "summary_alt": "/Users/island/Desktop/Pal5/step4b_step3b_outputs_control_emcee/pal5_step3b_summary.json",
+    "strict_fits": "/Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_refined_members.fits"
+  },
+  "plot_config": {
+    "compare_limit": 8.0,
+    "inner_limit": 5.0,
+    "cluster_width_window": 1.5,
+    "leading_width_window": [
+      5.0,
+      8.0
+    ],
+    "trailing_width_window": [
+      -15.0,
+      -5.0
+    ]
+  }
+}

@@ -2,6 +2,68 @@
 
 ## 2026-04-13
 
+- Task: 执行 step 4b MSTO-weighted refined `DM(phi1)` selection，并基于 refined members 重跑 step 3b / step 3c。
+- Files changed: `PAL5_STEP4B_CODEX_INSTRUCTIONS.md`, `pal5_step4b_msto_dm_selection.py`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile /Users/island/Desktop/Palomar 5/pal5_step4b_msto_dm_selection.py /Users/island/Desktop/Pal5/pal5_step4b_msto_dm_selection.py`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step4b_msto_dm_selection.py --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --iso /Users/island/Desktop/Pal5/pal5.dat --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --strict-fits /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_strict_members.fits --mu-prior /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --outdir /Users/island/Desktop/Pal5/step4b_outputs`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step3b_selection_aware_1d_model.py --signal /Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_refined_members.fits --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --eta-mode control --sampler map --outdir /Users/island/Desktop/Pal5/step4b_step3b_outputs_control`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step3b_selection_aware_1d_model.py --signal /Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_refined_members.fits --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --eta-mode control --sampler emcee --nwalkers 48 --burn 256 --steps 512 --outdir /Users/island/Desktop/Pal5/step4b_step3b_outputs_control_emcee`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step3c_bonaca_comparison.py --profiles-map /Users/island/Desktop/Pal5/step4b_step3b_outputs_control/pal5_step3b_profiles.csv --summary-map /Users/island/Desktop/Pal5/step4b_step3b_outputs_control/pal5_step3b_summary.json --label-map 'step4b MSTO DM + control + MAP' --profiles-alt /Users/island/Desktop/Pal5/step4b_step3b_outputs_control_emcee/pal5_step3b_profiles.csv --summary-alt /Users/island/Desktop/Pal5/step4b_step3b_outputs_control_emcee/pal5_step3b_summary.json --label-alt 'step4b MSTO DM + control + emcee' --strict-fits /Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_refined_members.fits --outdir /Users/island/Desktop/Pal5/step4b_step3c_outputs`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_summary.json`
+  - `sed -n '1,120p' /Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_dm_anchors.csv`
+  - `sed -n '1,240p' /Users/island/Desktop/Pal5/step4b_step3b_outputs_control/pal5_step3b_summary.json`
+  - `sed -n '1,240p' /Users/island/Desktop/Pal5/step4b_step3b_outputs_control_emcee/pal5_step3b_summary.json`
+  - `sed -n '1,280p' /Users/island/Desktop/Pal5/step4b_step3c_outputs/pal5_step3c_summary.json`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step4b_step3c_outputs/pal5_step3c_report.md`
+- Key findings:
+  - step 4b 本体运行成功，refined members 为 `451,842`，比 step 4 的 `460,278` 略收紧。
+  - coarse DM anchors 只有 `12 / 15` 成功，比 step 4 的 `15 / 15` 更保守，但方向更接近“trailing far / leading near”：
+    - `DM(phi1=-15) = 16.825`
+    - `DM(phi1=0) = 16.690`
+    - `DM(phi1=+8) = 16.570`
+  - step 4b `control + MAP` 的 morphology tradeoff 很清楚：
+    - `n_success = 39 / 41`
+    - `leading_width_max_5to8 = 0.313`
+    - `trailing_width_max_m15to5 = 0.465`
+    - `integrated_total_abs8 = 2843`
+    - `trailing/leading_abs5 = 1.81`
+  - 相比 step 4 `control + MAP`：
+    - leading fan width 确实改善：`0.293 -> 0.313`
+    - outer trailing width 继续改善：`0.486 -> 0.465`
+    - 但 integrated stars within `|phi1| < 8` 反而下降：`2912 -> 2843`
+    - inner asymmetry 变差：`1.84 -> 1.81` 仍高于 Bonaca `~1.5`，且没有向更好方向明显收敛
+  - step 4b `control + emcee` 进一步把 leading width 推高到接近 Bonaca：
+    - `leading_width_max_5to8 = 0.375`
+    - `trailing_width_max_m15to5 = 0.516`
+    - `trailing/leading_abs5 = 1.68`
+  - 但 `emcee` 版仍不应替代 MAP 成为 formal baseline；它更适合作为“若允许 posterior broadening，leading fan 可接近 0.4 deg”的 sanity check。
+  - 总体判断：
+    - step 4b 支持“anchor score 受 lower-MS / blue residual 污染”这个怀疑，因为 MSTO-weighted 版确实把 leading width 往 Bonaca 的方向推了
+    - 但它没有同时把 integrated counts 和 asymmetry 一起修好，因此下一瓶颈仍不只是在 coarse anchor scoring
+  - 另外顺手修了两个实现问题：
+    - `PAL5_STEP4B_CODEX_INSTRUCTIONS.md` 中 step 3c 命令的参数名已改成当前脚本实际使用的 `--profiles-map/--summary-map/--profiles-alt/--summary-alt`
+    - `pal5_step4b_msto_dm_selection.py` 现已真正消费 CLI 的 `--anchor-window-half` 与 `--dm-scan-half/step` 参数，避免文档参数与代码行为不一致
+- Validation result:
+  - `pal5_step4b_msto_dm_selection.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_refined_members.fits`
+    - `/Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_summary.json`
+    - `/Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_dm_anchors.csv`
+    - `/Users/island/Desktop/Pal5/step4b_outputs/pal5_step4b_dm_track.csv`
+    - `/Users/island/Desktop/Pal5/step4b_outputs/plots_step4b/qc_step4b_*.png`
+    - `/Users/island/Desktop/Pal5/step4b_step3b_outputs_control/pal5_step3b_summary.json`
+    - `/Users/island/Desktop/Pal5/step4b_step3b_outputs_control_emcee/pal5_step3b_summary.json`
+    - `/Users/island/Desktop/Pal5/step4b_step3c_outputs/pal5_step3c_summary.json`
+    - `/Users/island/Desktop/Pal5/step4b_step3c_outputs/pal5_step3c_report.md`
+- Remaining issues:
+  - step 4b `MAP` 版仍未把 leading width 推到 Bonaca `~0.4 deg`。
+  - `MAP` 版 integrated counts 与 inner asymmetry 没有同步改善，说明单改 coarse anchor score 不足以解决核心差异。
+  - `emcee` 版能把 leading width 推近 `0.4`，但伴随更宽的 trailing morphology，仍只能作为 posterior sanity check。
+- Next step:
+  - 将 `step4b_step3c_outputs/` 作为新的强对照结果带回科学讨论。
+  - 下一阶段优先考虑更全局、更平滑的 `DM(phi1)` 与 completeness / background，而不是只继续手调 anchor score 窗口。
+
 - Task: 执行新的 step 4 refined `DM(phi1)` selection，并基于 refined members 重跑 step 3b / step 3c。
 - Files changed: `PAL5_STEP4_CODEX_INSTRUCTIONS.md`, `pal5_step4_refined_dm_selection.py`, `WORKLOG.md`, `PLAN.md`
 - Commands run:
