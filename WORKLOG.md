@@ -2,6 +2,57 @@
 
 ## 2026-04-13
 
+- Task: 执行 step 3c，把当前最稳的 `control + MAP` step 3b 结果整理为 Bonaca-style 对照版本，并保留 `control + emcee` 作为后验检查。
+- Files changed: `PAL5_STEP3C_CODEX_INSTRUCTIONS.md`, `pal5_step3c_bonaca_comparison.py`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `sed -n '1,980p' /Users/island/Desktop/PAL5_STEP3C_CODEX_INSTRUCTIONS.md`
+  - `sed -n '1,980p' /Users/island/Desktop/pal5_step3c_bonaca_comparison.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile pal5_step3c_bonaca_comparison.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' pal5_step3c_bonaca_comparison.py --profiles-map step3b_outputs_control/pal5_step3b_profiles.csv --summary-map step3b_outputs_control/pal5_step3b_summary.json --profiles-alt step3b_outputs_control_emcee/pal5_step3b_profiles.csv --summary-alt step3b_outputs_control_emcee/pal5_step3b_summary.json --strict-fits step2_outputs/pal5_step2_strict_members.fits --outdir step3c_outputs`
+  - `cat /Users/island/Desktop/Pal5/step3c_outputs/pal5_step3c_summary.json`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step3c_outputs/pal5_step3c_report.md`
+- Key findings:
+  - step 3c 未重新拟合，而是成功将现有 `control + MAP` 与 `control + emcee` 的 step 3b 结果整理成 Bonaca-style figure/report/metrics。
+  - Baseline (`control + MAP`) 的 Bonaca-style关键指标：
+    - successful bins excluding cluster = `37`
+    - trailing extent = `19.25 deg`
+    - leading extent = `9.25 deg`
+    - integrated stars within `|phi1| < 8` = `2872`
+    - trailing/leading within `|phi1| < 5` = `1.75`
+    - near-cluster width = `0.118 deg`
+    - leading max width in `[5, 8]` = `0.287 deg` at `phi1 = 7.0`
+    - trailing outer max width in `[-15, -5]` = `0.554 deg` at `phi1 = -10.25`
+  - 这些结果已经接近当前文档要求的 Bonaca-style bookkeeping：
+    - 总星数 `2872` 接近 Bonaca 参考值 `~3000 ± 100`
+    - leading fan 在 `phi1 ~ 7 deg` 处确实变宽
+    - outer trailing width 仍偏宽，是当前最明显的残余可疑点
+  - `control + emcee` 版与 MAP 版的 track / integrated counts 接近，但 trailing outer width 更宽到 `0.750 deg`，因此更适合作为 posterior sanity check，而不应替代 MAP 版成为正式 baseline。
+  - step 3c 的 report 结论与当前项目决策一致：保留 `control + MAP` 作为 formal baseline，保留 `control + emcee` 作为 uncertainty/posterior 检查。
+- Validation result:
+  - `pal5_step3c_bonaca_comparison.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step3c_outputs/fig_step3c_bonaca_profiles.png`
+    - `/Users/island/Desktop/Pal5/step3c_outputs/fig_step3c_local_map.png`
+    - `/Users/island/Desktop/Pal5/step3c_outputs/fig_step3c_baseline_vs_alternate.png`
+    - `/Users/island/Desktop/Pal5/step3c_outputs/fig_step3c_asymmetry.png`
+    - `/Users/island/Desktop/Pal5/step3c_outputs/pal5_step3c_profile_table.csv`
+    - `/Users/island/Desktop/Pal5/step3c_outputs/pal5_step3c_metrics.csv`
+    - `/Users/island/Desktop/Pal5/step3c_outputs/pal5_step3c_summary.json`
+    - `/Users/island/Desktop/Pal5/step3c_outputs/pal5_step3c_report.md`
+- Remaining issues:
+  - trailing outer arm width remains suspiciously too large near `phi1 ~ -10.25 deg`
+  - 还不能把局部 density dips 当成最终物理 gap
+  - 下一阶段如果继续升级，应围绕 smoother `DM(phi1)` 和更进一步的 background/completeness，而不是再回退到更简单的 baseline
+- Next step:
+  - 以 `step3c_outputs/` 作为当前 Bonaca-style 比较基线回到科学讨论
+  - 重点带回：
+    - `pal5_step3c_report.md`
+    - `pal5_step3c_summary.json`
+    - `pal5_step3c_metrics.csv`
+    - `fig_step3c_bonaca_profiles.png`
+    - `fig_step3c_asymmetry.png`
+    - `fig_step3c_baseline_vs_alternate.png`
+
 - Task: 查找并启用 `emcee`，对 step 3b 的优选 `control` 模式补跑 posterior-sampling 版本。
 - Files changed: `WORKLOG.md`, `PLAN.md`
 - Commands run:

@@ -194,18 +194,21 @@ Phase 0 预期输出：
   - `n_success = 39 / 41`
   - `n_success_excluding_cluster = 37`
   - 与 MAP 版相比，成功 bin 数不变，但 width 整体略宽。
+- step 3c 已完成 Bonaca-style comparison / figure-making：
+  - `step3c_outputs/` 已生成 figure、metrics、summary、report
+  - 当前正式 baseline 应采用 `control + MAP`
+  - `control + emcee` 保留为 posterior sanity check
 
 ## Immediate next steps
 
-1. 优先人工检查 `step3b_outputs_control/`：
-   - `qc_step3b_control_density_phi12.png`
-   - `qc_step3b_density_phi12_local.png`
-   - `qc_step3b_track.png`
-   - `qc_step3b_width.png`
-   - `qc_step3b_linear_density.png`
-   - `qc_step3b_example_local_fits.png`
-2. 与 `step3b_outputs_control_depth/` 对照，确认 `control` 模式是否在形态和稳定性上都更优。
-3. 再将 `step3b_outputs_control/` 与 `step3b_outputs_control_emcee/` 对照，判断是保留：
-   - MAP 版作为主参考
-   - 还是 `emcee` 版作为主参考
-4. 在 step 3b baseline 确认后，再讨论 smoother `DM(phi1)` 与进一步 background/completeness 升级。
+1. 以 `step3c_outputs/` 的 Bonaca-style 整理结果作为当前讨论入口：
+   - `pal5_step3c_report.md`
+   - `pal5_step3c_summary.json`
+   - `pal5_step3c_metrics.csv`
+   - `fig_step3c_bonaca_profiles.png`
+   - `fig_step3c_asymmetry.png`
+   - `fig_step3c_baseline_vs_alternate.png`
+2. 当前默认科学基线固定为：
+   - `control + MAP` = formal baseline
+   - `control + emcee` = posterior sanity check
+3. 下一阶段优先讨论 smoother `DM(phi1)` 与后续 completeness / background 升级，而不是再改变 baseline bookkeeping 逻辑。
