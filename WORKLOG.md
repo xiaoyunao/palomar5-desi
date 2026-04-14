@@ -1,6 +1,119 @@
 # WORKLOG
 
+## 2026-04-14
+
+- Task: 执行 step 4c，将 step4b 的 MSTO-weighted photometric anchors 与 Price-Whelan+2019 RR Lyrae 弱先验结合，并重跑 `step3b control + MAP` / `step3c`。
+- Files changed: `PAL5_STEP4C_CODEX_INSTRUCTIONS.md`, `pal5_step4c_rrlprior_dm_selection.py`, `pal5_rrl_price_whelan_2019_subset.csv`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `git status --short --branch`
+  - `git branch --show-current`
+  - `git fetch --all --prune`
+  - `git log --oneline --decorate --graph -n 15 --all`
+  - `sed -n '1,260p' /Users/island/Desktop/PAL5_STEP4C_CODEX_INSTRUCTIONS.md`
+  - `sed -n '1,980p' /Users/island/Desktop/pal5_step4c_rrlprior_dm_selection.py`
+  - `sed -n '1,120p' /Users/island/Desktop/pal5_rrl_price_whelan_2019_subset.csv`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile /Users/island/Desktop/Palomar 5/pal5_step4c_rrlprior_dm_selection.py /Users/island/Desktop/Pal5/pal5_step4c_rrlprior_dm_selection.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m pip install gala`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' - <<'PY' ... import astropy, gala, astroquery ...`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step4c_rrlprior_dm_selection.py --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --rrl-anchor-csv /Users/island/Desktop/Pal5/pal5_rrl_price_whelan_2019_subset.csv --rrl-cache-csv /Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_rrl_enriched.csv --output-dir /Users/island/Desktop/Pal5/step4c_outputs --output-members /Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_rrlprior_members.fits --allow-gaia-query`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step3b_selection_aware_1d_model.py --signal /Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_rrlprior_members.fits --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --eta-mode control --sampler map --outdir /Users/island/Desktop/Pal5/step4c_step3b_outputs_control`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step3c_bonaca_comparison.py --profiles-map /Users/island/Desktop/Pal5/step4c_step3b_outputs_control/pal5_step3b_profiles.csv --summary-map /Users/island/Desktop/Pal5/step4c_step3b_outputs_control/pal5_step3b_summary.json --label-map 'step4c RRL prior + control + MAP' --profiles-alt /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_profiles.csv --summary-alt /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_summary.json --label-alt 'step3b control + MAP' --strict-fits /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_strict_members.fits --outdir /Users/island/Desktop/Pal5/step4c_step3c_vs_step3b_baseline`
+  - `sed -n '1,240p' /Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_summary.json`
+  - `sed -n '1,240p' /Users/island/Desktop/Pal5/step4c_step3b_outputs_control/pal5_step3b_summary.json`
+  - `sed -n '1,280p' /Users/island/Desktop/Pal5/step4c_step3c_vs_step3b_baseline/pal5_step3c_summary.json`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step4c_step3c_vs_step3b_baseline/pal5_step3c_report.md`
+- Key findings:
+  - 为运行 step 4c，已在 `astro` 环境中安装 `gala 1.11.0`；这同时把 `astropy` 从 `5.3.4` 升到了 `7.2.0`，并与 `poliastro` 的约束产生冲突。对当前 Pal 5 脚本可用，但这是一个环境层面的真实风险。
+  - step 4c 本体运行成功，并完成 Gaia DR2 对 27 个 Price-Whelan+2019 RRL source_id 的 enrich，缓存写入 `step4c_outputs/pal5_step4c_rrl_enriched.csv`。
+  - step 4c 的 DM(track) 形状方向是健康的：
+    - `DM(phi1=-15) = 16.803`
+    - `DM(phi1=0) = 16.718`
+    - `DM(phi1=+8) = 16.540`
+  - step 4c refined members 为 `456,496`，相对 step 4b 的 `451,842` 只略增，没有异常塌缩。
+  - 基于 step 4c 成员的 `step3b control + MAP` 结果：
+    - `n_success = 40 / 41`
+    - `n_success_excluding_cluster = 38`
+    - `leading_width_max_5to8 = 0.301`
+    - `trailing_width_max_m15to5 = 0.535`
+  - 与冻结的 formal baseline (`step3b control + MAP`) 做 step 3c Bonaca-style 对照后，step 4c 满足了“整体朝对方向移动”的要求：
+    - `|phi1| < 8` integrated stars: `2872 -> 2960`
+    - `trailing/leading_abs8`: `1.68 -> 1.50`
+    - `trailing/leading_abs5`: `1.75 -> 1.64`
+    - `leading_width_max_5to8`: `0.287 -> 0.301`
+    - `trailing_width_max_m15to5`: `0.554 -> 0.535`
+    - near-cluster width: `0.118 -> 0.120`
+  - 这说明：把 RRL 只作为 `DM(phi1)` 的弱先验并到 step4b 的 selection 线中，确实能在不破坏 counts 量级的前提下，同时改善 asymmetry、leading width 和 outer trailing width。
+- Validation result:
+  - `pal5_step4c_rrlprior_dm_selection.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_summary.json`
+    - `/Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_report.md`
+    - `/Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_dm_track.csv`
+    - `/Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_combined_anchors.csv`
+    - `/Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_rrl_enriched.csv`
+    - `/Users/island/Desktop/Pal5/step4c_outputs/qc_step4c_*.png`
+    - `/Users/island/Desktop/Pal5/step4c_step3b_outputs_control/pal5_step3b_summary.json`
+    - `/Users/island/Desktop/Pal5/step4c_step3c_vs_step3b_baseline/pal5_step3c_summary.json`
+    - `/Users/island/Desktop/Pal5/step4c_step3c_vs_step3b_baseline/pal5_step3c_report.md`
+- Remaining issues:
+  - leading width 仍未接近 Bonaca `~0.4 deg`，只是朝该方向小幅改善。
+  - outer trailing width 仍偏宽，只是比 formal baseline 略好。
+  - `astro` 环境现在存在 `astropy` / `poliastro` 的版本冲突，需要后续注意是否影响其他项目。
+- Next step:
+  - 将 `step4c + step3b(control+MAP)` 视为当前最有力的 **working baseline v2 候选**。
+  - background 线 (`step5`, `step5a`) 仍只保留诊断角色，不继续作为 baseline 竞争者。
+
 ## 2026-04-13
+
+- Task: 执行 step 5a off-stream anchored empirical-background model，并与当前 formal baseline 做 Bonaca-style 对照。
+- Files changed: `PAL5_STEP5A_CODEX_INSTRUCTIONS.md`, `pal5_step5a_empirical_bg_offstream_model.py`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile /Users/island/Desktop/Palomar 5/pal5_step5a_empirical_bg_offstream_model.py /Users/island/Desktop/Pal5/pal5_step5a_empirical_bg_offstream_model.py`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step5a_empirical_bg_offstream_model.py --signal /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_strict_members.fits --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --support-script /Users/island/Desktop/Pal5/pal5_step3b_selection_aware_1d_model.py --outdir /Users/island/Desktop/Pal5/step5a_outputs_control_map`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Pal5/pal5_step3c_bonaca_comparison.py --profiles-map /Users/island/Desktop/Pal5/step5a_outputs_control_map/pal5_step5a_profiles.csv --summary-map /Users/island/Desktop/Pal5/step5a_outputs_control_map/pal5_step5a_summary.json --label-map 'step5a empirical bg + MAP' --profiles-alt /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_profiles.csv --summary-alt /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_summary.json --label-alt 'step3b control + MAP' --strict-fits /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_strict_members.fits --outdir /Users/island/Desktop/Pal5/step5a_step3c_vs_baseline`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step5a_outputs_control_map/pal5_step5a_summary.json`
+  - `sed -n '1,280p' /Users/island/Desktop/Pal5/step5a_step3c_vs_baseline/pal5_step3c_summary.json`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step5a_step3c_vs_baseline/pal5_step3c_report.md`
+- Key findings:
+  - step 5a 比原 step 5 明显稳定得多：
+    - `n_success = 41 / 41`
+    - `n_success_excluding_cluster = 39`
+    - `track_poly_trailing` 与 `track_poly_leading` 都恢复正常
+    - `sigma` 不再顶到原 step 5 的病态上限 `1.2 deg`
+  - 与当前 formal baseline (`step3b control + MAP`) 相比，step 5a 的主要变化是：
+    - leading max width `[5, 8]`: `0.287 -> 0.311`
+    - trailing max width `[-15, -5]`: `0.554 -> 0.358`
+    - `|phi1| < 5` trailing/leading: `1.75 -> 1.14`
+    - `|phi1| < 8` trailing/leading: `1.68 -> 1.18`
+  - 这说明 off-stream anchored empirical background 的方向确实能显著压低原 baseline 中偏大的 trailing dominance，并改善 outer trailing width。
+  - 但这版也引入了新的明显问题：
+    - `integrated_total_abs8 = 4839`，远高于当前 baseline 的 `2872`，也远高于 Bonaca-like `~3000`
+    - `integrated_total_abs5 = 3356`，同样偏高
+    - near-cluster width 更窄：`0.110`
+  - 因此当前 step 5a 的整体判断是：
+    - 它成功解决了原 step 5 的“模型彻底发散”问题
+    - 也显示 empirical off-stream background 能强烈影响 asymmetry 与 outer trailing width
+    - 但当前 normalization 让 stream counts 明显偏高，说明 fixed background + off-stream anchoring 仍然过度把 signal 从 background 中扣了出来
+- Validation result:
+  - `pal5_step5a_empirical_bg_offstream_model.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step5a_outputs_control_map/pal5_step5a_profiles.fits`
+    - `/Users/island/Desktop/Pal5/step5a_outputs_control_map/pal5_step5a_profiles.csv`
+    - `/Users/island/Desktop/Pal5/step5a_outputs_control_map/pal5_step5a_summary.json`
+    - `/Users/island/Desktop/Pal5/step5a_outputs_control_map/pal5_step5a_control_sidebands.fits`
+    - `/Users/island/Desktop/Pal5/step5a_outputs_control_map/qc_step5a_*.png`
+    - `/Users/island/Desktop/Pal5/step5a_step3c_vs_baseline/pal5_step3c_summary.json`
+    - `/Users/island/Desktop/Pal5/step5a_step3c_vs_baseline/pal5_step3c_report.md`
+- Remaining issues:
+  - integrated counts are too high by a large factor relative to Bonaca-like bookkeeping
+  - near-cluster width is still too narrow
+  - current off-stream normalization may be over-subtracting background and inflating stream counts
+- Next step:
+  - 若继续 step 5a 路线，优先检查：
+    - off-stream normalization window (`off_inner`, `off_outer`, `bg_exclude_half`)
+    - stream `n_stream` parameterization and normalization convention
+    - whether full-window Poisson fitting plus fixed bg is double-counting integrated stream signal
+  - 当前 step 5a 已经比原 step 5 更值得继续调试，但还不能替代 formal baseline
 
 - Task: 执行 step 4b MSTO-weighted refined `DM(phi1)` selection，并基于 refined members 重跑 step 3b / step 3c。
 - Files changed: `PAL5_STEP4B_CODEX_INSTRUCTIONS.md`, `pal5_step4b_msto_dm_selection.py`, `WORKLOG.md`, `PLAN.md`

@@ -1,0 +1,42 @@
+{
+  "signal": "/Users/island/Desktop/Pal5/step2_outputs/pal5_step2_strict_members.fits",
+  "preproc": "/Users/island/Desktop/Pal5/final_g25_preproc.fits",
+  "step2_summary": "/Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json",
+  "iso": "/Users/island/Desktop/Pal5/pal5.dat",
+  "mu_prior_file": "/Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt",
+  "support_script": "/Users/island/Desktop/Pal5/pal5_step3b_selection_aware_1d_model.py",
+  "sampler": "map",
+  "eta_mode": "offstream_empirical_fixedbg",
+  "n_input_signal": 444232,
+  "n_control_total": 470330,
+  "n_parent_total": 2525070,
+  "phi1_min": -20.0,
+  "phi1_max": 10.0,
+  "phi1_step": 0.75,
+  "window_scale": 1.5,
+  "window_width_phi1": 1.125,
+  "fit_halfwidth": 1.5,
+  "min_signal_stars": 60,
+  "n_bins": 41,
+  "n_success": 41,
+  "n_success_excluding_cluster": 39,
+  "track_poly_trailing": [
+    0.0031632660067082074,
+    -0.0811762505247651,
+    -0.6025523325873704
+  ],
+  "track_poly_leading": [
+    0.0055149122147016465,
+    0.20497768737100994,
+    -0.038688738376172364
+  ],
+  "max_width_leading": 0.31146630253508206,
+  "max_width_trailing": 0.357761514148357,
+  "integrated_stream_stars_excluding_cluster": 7863.666838071927,
+  "notes": [
+    "This step5a run uses an empirical background template learned from control sidebands.",
+    "Background normalization is anchored using off-stream bins only.",
+    "The parent-count map is retained only as a diagnostic proxy, not as a multiplicative area-amplitude term.",
+    "MAP uncertainties are heuristic, not posterior-sampled."
+  ]
+}

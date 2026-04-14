@@ -1,0 +1,32 @@
+{
+  "input": "/Users/island/Desktop/Pal5/final_g25_preproc.fits",
+  "step2_summary": "/Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json",
+  "iso": "/Users/island/Desktop/Pal5/pal5.dat",
+  "mu_prior": "/Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt",
+  "rrl_anchor_csv": "/Users/island/Desktop/Pal5/pal5_rrl_price_whelan_2019_subset.csv",
+  "rrl_cache_csv": "/Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_rrl_enriched.csv",
+  "output_members": "/Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_rrlprior_members.fits",
+  "n_zparent_total": 2723450,
+  "n_photometric_anchors": 15,
+  "n_combined_anchors": 32,
+  "n_combined_anchors_used": 32,
+  "n_rrl_total": 27,
+  "n_rrl_stream_used": 16,
+  "cluster_dm_rrl_mag": 16.57985172728459,
+  "rrl_zero_point_shift_mag": 0.1451482727154101,
+  "dm_at_phi1_minus15": 16.80289514108695,
+  "dm_at_phi1_0": 16.717750310876564,
+  "dm_at_phi1_plus8": 16.540064429964293,
+  "refined_selected": 456496,
+  "cutflow": {
+    "input": 13520015,
+    "strict_mag_z_locus": 2723450,
+    "iso_variable_dm_rrlprior": 456496
+  },
+  "notes": [
+    "Photometric anchors are MSTO-weighted, following the step4b strategy.",
+    "RR Lyrae distances are converted to pseudo-photometric DM anchors by locking the global zero-point to the step2 cluster DM.",
+    "Only stream RRLs above the configured membership threshold are used as weak priors in the DM(phi1) fit.",
+    "The output members should be fed back into step3b control+MAP to define the new working baseline."
+  ]
+}

@@ -235,28 +235,78 @@ Phase 0 预期输出：
   - step 4b 说明 MSTO-weighted anchor score 确实能把 morphology 往 Bonaca 的 leading-fan 方向推
   - 但它没有把 integrated counts 和 asymmetry 同步修好，因此不能单靠这一招解决当前差异
   - `step4b + emcee` 可把 leading width 推到 `0.375`，接近 Bonaca `~0.4`，但仍只适合作为 posterior sanity check，而不是新的 formal baseline
+- step 5 empirical background + effective-area 模型已做第一次 MAP 试跑：
+  - 技术上跑通，但科学结果明显退化
+  - `step5_outputs_control_map/`: `n_success = 41 / 41`, `n_success_excluding_cluster = 39`
+  - 但 `track_poly_trailing = null`, `track_poly_leading = null`
+  - `max_width_leading = 1.2`, `max_width_trailing = 1.2`
+  - `integrated_total_abs8 = 3734`
+  - 多个外侧 bin 的 `sigma` 顶到上限，说明 stream/background 分解失稳
+- 当前结论：
+  - step 5 的科学方向仍然合理，但当前实现暂时不可用，不应进入 baseline 候选
+  - 这轮运行更像是一次模型调试定位：empirical background + area 的 identifiability 还不够稳
+- step 5a off-stream anchored empirical-background 模型已完成第一次 MAP 试跑：
+  - `step5a_outputs_control_map/`: `n_success = 41 / 41`, `n_success_excluding_cluster = 39`
+  - `track_poly_trailing` / `track_poly_leading` 均恢复正常，不再是 `null`
+  - `leading_width_max_5to8 = 0.311`
+  - `trailing_width_max_m15to5 = 0.358`
+  - `trailing/leading_abs5 = 1.14`
+  - 但 `integrated_total_abs8 = 4839`，明显高于 Bonaca-like `~3000`
+- 当前结论：
+  - step 5a 明显比原 step 5 稳定得多，是 empirical-background 路线上首个“可调试”的版本
+  - 它在 asymmetry 和 outer trailing width 上给出了强烈改善信号
+  - 但 integrated counts 过高，说明当前 off-stream anchored normalization 仍然有系统偏差
+  - 因此 step 5a 现在是“值得继续调试的候选”，但仍不能替代 formal baseline
+- step 4c RRL-prior refined-DM selection 已完成，并已串联 step 3b / step 3c：
+  - `step4c_outputs/` 已生成 RRL-enriched cache、combined anchors、DM track、report 和 QC 图
+  - `step4c_step3b_outputs_control/`: `n_success = 40 / 41`, `n_success_excluding_cluster = 38`
+  - `step4c_step3c_vs_step3b_baseline/` 已生成与冻结 formal baseline 的 Bonaca-style对照
+- step 4c 相对冻结 formal baseline (`step3b control + MAP`) 的主要变化：
+  - `|phi1| < 8` integrated stars: `2872 -> 2960`
+  - `trailing/leading_abs8`: `1.68 -> 1.50`
+  - `trailing/leading_abs5`: `1.75 -> 1.64`
+  - `leading_width_max_5to8`: `0.287 -> 0.301`
+  - `trailing_width_max_m15to5`: `0.554 -> 0.535`
+  - near-cluster width: `0.118 -> 0.120`
+- 当前结论：
+  - step 4c 是目前 selection 线中最平衡的一版：counts 仍在 Bonaca-like 范围内，同时 asymmetry、leading width 和 outer trailing width 都朝正确方向改善
+  - 因此 `step4c + step3b(control+MAP)` 应作为当前 **working baseline v2 候选**
+  - 冻结的 formal baseline 仍保持 `step3b control + MAP`，直到明确决定切换
 
 ## Immediate next steps
 
-1. 以 `step4_outputs/` 和 `step4b_outputs/` 两套 refined-DM 对照一起作为下一轮科学讨论入口：
+1. 现在的 selection 线讨论入口应升级为三套对照：
    - 重点比较：
+     - `step4c_step3c_vs_step3b_baseline/pal5_step3c_summary.json`
      - `step4_step3c_outputs/pal5_step3c_summary.json`
      - `step4b_step3c_outputs/pal5_step3c_summary.json`
      - `step4_outputs/plots_step4/qc_step4_dm_track.png`
      - `step4b_outputs/plots_step4b/qc_step4b_dm_track.png`
+     - `step4c_outputs/qc_step4c_dm_track.png`
      - `step4_outputs/plots_step4/qc_step4_segment_cmds.png`
      - `step4b_outputs/plots_step4b/qc_step4b_segment_cmds.png`
+     - `step4c_outputs/qc_step4c_segment_cmds.png`
 2. 其中：
    - step 4 更接近 Bonaca 的 integrated counts
    - step 4b 更接近 Bonaca 的 leading width / outer trailing width
+   - step 4c 目前是在 counts、asymmetry、leading width、outer trailing width 之间最平衡的一版
 3. 当前默认 formal baseline 仍固定为：
    - `control + MAP` = formal baseline
    - `control + emcee` = posterior sanity check
 4. refined-DM 系列对照目前可分为：
    - step 4: coarse-anchor refined DM, counts-oriented improvement
    - step 4b: MSTO-weighted refined DM, morphology-oriented improvement
+   - step 4c: MSTO + RRL weak-prior refined DM, current working-baseline-v2 candidate
 5. 下一阶段优先讨论：
    - smoother global `DM(phi1)` model
    - completeness / effective-area bookkeeping
    - empirical background template
-6. 不建议继续只围绕 step 4b 的局部 anchor-scoring 参数做更多手调，除非新的 QC 明确指出某个窗口设置仍在系统性拉偏。
+6. 若继续 step 5 路线，优先不是直接跑 `emcee`，而是先调试：
+   - stream/background mixture 的可辨识性
+   - area template 与 empirical background 的归一化
+   - `sigma` 与 stream fraction 的先验/参数化
+7. 若继续 step 5a 路线，优先调试：
+   - off-stream normalization window (`off_inner`, `off_outer`, `bg_exclude_half`)
+   - stream `n_stream` 与 integrated-count bookkeeping 的一致性
+   - near-cluster region 是否因固定背景过强而被过度扣除
+8. 不建议继续只围绕 step 4b 的局部 anchor-scoring 参数做更多手调，除非新的 QC 明确指出某个窗口设置仍在系统性拉偏。
