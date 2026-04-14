@@ -218,6 +218,29 @@ Phase 0 预期输出：
 - 当前结论：
   - refined coarse-anchor `DM(phi1)` 值得保留为一次重要对照，因为它改善了 integrated counts 和 outer trailing width
   - 但 leading fan 偏窄的问题并未因此解决，因此下一阶段瓶颈更可能在 completeness / background / 更平滑的全流 distance model，而不是 step 2 的 two-arm DM baseline 本身
+- step 4c RR-Lyrae 弱先验版本现已明确分成两套基线约定：
+  - frozen formal baseline v1：继续保留 `step3b_outputs_control/` 与其对应 `step3c_outputs/`
+  - working baseline v2：固定为 `step4c_outputs/pal5_step4c_rrlprior_members.fits` + `step4c_step3b_outputs_control/` + `step4c_step3c_vs_step3b_baseline/`
+- step 4c working baseline v2 的已核对指标：
+  - refined selected members: `456,496`
+  - `DM(phi1=-15) = 16.803`
+  - `DM(phi1=+8) = 16.540`
+  - `|phi1| < 8` integrated stars: `2959.7`
+  - `trailing/leading_abs8 = 1.499`
+  - `trailing/leading_abs5 = 1.639`
+  - leading `[5, 8]` max width: `0.301 deg`
+  - trailing `[-15, -5]` max width: `0.535 deg`
+- 后续新的 background 实验默认输入：
+  - `step4c_outputs/pal5_step4c_rrlprior_members.fits`
+  - plotting/QC 只允许改诊断显示，不改 step4c selection 或其科学结果
+- step4c plotting-only patch 已实跑完成：
+  - `qc_step4c_segment_cmds_fullcmd.png` 已确认显示 full parent on-stream CMD 背景，而不是仅显示打分窗口样本
+  - log-scale selected density 图已重生成为后续 background 诊断默认 QC 图
+- step4c CMD plotting fix 现以 v3 为准：
+  - 保持原始 `on-stream - 0.5 x off-stream` excess Hess 风格
+  - 不再叠加 contour / grayscale full-CMD 风格
+  - Hess 的显示 parent sample 改为 full z-locus parent，而不是 `20 < g0 < 23` strict-mag-limited sample
+  - 当前推荐图为 `step4c_outputs/qc_step4c_segment_cmds_stylefixed_fullhess.png`
 - step 4b MSTO-weighted refined-DM selection 已完成，并已串联 step 3b / step 3c：
   - `step4b_outputs/` 已生成 refined members、MSTO-weighted DM anchors、DM track 和 QC 图
   - `step4b_step3b_outputs_control/`: `n_success = 39 / 41`, `n_success_excluding_cluster = 37`

@@ -2,6 +2,77 @@
 
 ## 2026-04-14
 
+- Task: 采纳 step4c plotting patch v3，并将其作为当前有效的 CMD style-fix 收入仓库与远端。
+- Files changed: `pal5_step4c_plotting_patch_v3.py`, `PAL5_STEP4C_PLOTTING_PATCH_V3.md`, `PLAN.md`, `WORKLOG.md`
+- Commands run:
+  - `sed -n '1,260p' /Users/island/Desktop/PAL5_STEP4C_PLOTTING_PATCH_V3.md`
+  - `sed -n '1,360p' /Users/island/Desktop/pal5_step4c_plotting_patch_v3.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile /Users/island/Desktop/pal5_step4c_plotting_patch_v3.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/pal5_step4c_plotting_patch_v3.py --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --dm-track-csv /Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_dm_track.csv --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --output /Users/island/Desktop/Pal5/step4c_outputs/qc_step4c_segment_cmds_stylefixed_fullhess.png`
+  - `ls -lh /Users/island/Desktop/Pal5/step4c_outputs/qc_step4c_segment_cmds_stylefixed_fullhess.png`
+- Key findings:
+  - v3 才真正修到了根因：不是叠加额外 full-CMD 显示层，而是把 segment CMD excess Hess 的输入从 strict-mag-limited 显示样本切回 full z-locus parent sample。
+  - 新图保持了原始 `step4c` 的 excess Hess 风格，只保留橙色 isochrone 覆盖，没有 contour 或灰度 full-CMD 改画法。
+  - 这样 `16 < g0 < 24` 范围内的显示样本现在会真正进入 Hess，而不再被 `20 < g0 < 23` 的 strict-mag 显示逻辑截断。
+- Validation result:
+  - `pal5_step4c_plotting_patch_v3.py` 语法检查通过。
+  - 实际生成：`/Users/island/Desktop/Pal5/step4c_outputs/qc_step4c_segment_cmds_stylefixed_fullhess.png`
+- Remaining issues:
+  - 无；v1/v2 仅保留为本地试错记录，当前有效版本为 v3。
+- Next step:
+  - 将 v3 patch 推送到远端，并在后续需要时用同一逻辑覆盖 `qc_step4c_segment_cmds.png`。
+
+- Task: 合并 step4c plotting-only patch，并冻结 step4c selection-upgraded baseline 作为后续 background 实验默认输入。
+- Files changed: `pal5_step4c_plotting_patch.py`, `PAL5_STEP4C_PLOTTING_PATCH_AND_BASELINE.md`, `PLAN.md`, `WORKLOG.md`
+- Commands run:
+  - `sed -n '1,260p' /Users/island/Desktop/PAL5_STEP4C_PLOTTING_PATCH_AND_BASELINE.md`
+  - `sed -n '1,360p' /Users/island/Desktop/pal5_step4c_plotting_patch.py`
+  - `rg -n "qc_step4c_segment_cmds|selected density|imshow|hist2d|Hess|full parent|strict z-parent|log" pal5_step4c_rrlprior_dm_selection.py`
+  - `sed -n '1,240p' /Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_report.md`
+  - `sed -n '1,240p' /Users/island/Desktop/Pal5/step4c_step3c_vs_step3b_baseline/pal5_step3c_summary.json`
+- Key findings:
+  - 仓库内原 `step4c` 诊断图逻辑确实仍用 strict z-parent / 打分窗口近邻的 Hess 图显示，导致 `20 < g0 < 23` 之外的星在 segment CMD 面板里没有被真正画出。
+  - 本次 patch 只改 plotting：full parent on-stream CMD 背景、strict z-parent excess contour、DM-track isochrone、高亮 score band、以及 log-scale selected density 图。
+  - 已将 `step4c + step3b(control+MAP)` 明确冻结为 working baseline v2；后续 background 实验默认应吃 `step4c_outputs/pal5_step4c_rrlprior_members.fits`。
+- Validation result:
+  - `pal5_step4c_plotting_patch.py` 已通过 `py_compile`。
+  - 已在 `/Users/island/Desktop/Pal5` 实跑成功，生成：
+    - `/Users/island/Desktop/Pal5/step4c_outputs/qc_step4c_segment_cmds_fullcmd.png`
+    - `/Users/island/Desktop/Pal5/step4c_outputs/qc_step4c_selected_density_phi12_log.png`
+    - `/Users/island/Desktop/Pal5/step4c_outputs/qc_step4c_selected_density_radec_log.png`
+    - `/Users/island/Desktop/Pal5/step4c_outputs/qc_step4c_selected_density_phi12_local_log.png`
+    - `/Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_plotpatch_summary.json`
+  - `pal5_step4c_plotpatch_summary.json` 中的计数与既有 step4c 结果一致：
+    - `n_selected = 456,496`
+    - `n_zparent = 2,723,450`
+  - 目视检查 `qc_step4c_segment_cmds_fullcmd.png` 后确认：灰度 full parent CMD 背景已覆盖完整 `16 < g0 < 24`，橙色 score band 只是高亮，不再承担显示 mask。
+- Remaining issues:
+  - 无新的 patch 阻塞项；后续可直接基于 step4c baseline v2 进入 background 实验。
+- Next step:
+  - 以 `step4c_outputs/pal5_step4c_rrlprior_members.fits` 作为默认 signal sample，开始新的 background-model 实验。
+
+- Task: 新会话初始化检查，按项目规则恢复仓库上下文并确认是否需要补齐基础文件。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `git status --short --branch`
+  - `git branch --show-current`
+  - `git fetch --all --prune`
+  - `git log --oneline --decorate --graph -n 15 --all`
+  - `rg --files -g 'WORKLOG.md' -g 'PLAN.md' -g 'README.md' -g 'CHANGELOG.md'`
+  - `sed -n '1,220p' WORKLOG.md`
+  - `sed -n '1,220p' PLAN.md`
+  - `sed -n '1,220p' README.md`
+- Key findings:
+  - 仓库已初始化完成，当前分支为 `main`，且与 `origin/main` 对齐。
+  - 工作区干净，没有未提交改动。
+  - `WORKLOG.md`、`PLAN.md`、`README.md` 已存在并包含持续维护内容，无需补建。
+- Validation result:
+  - 初始化检查完成，项目可直接进入下一步开发或分析。
+- Remaining issues:
+  - 无新的初始化阻塞项。
+- Next step:
+  - 基于当前 `PLAN.md` 继续后续科学分析或脚本开发。
+
 - Task: 执行 step 4c，将 step4b 的 MSTO-weighted photometric anchors 与 Price-Whelan+2019 RR Lyrae 弱先验结合，并重跑 `step3b control + MAP` / `step3c`。
 - Files changed: `PAL5_STEP4C_CODEX_INSTRUCTIONS.md`, `pal5_step4c_rrlprior_dm_selection.py`, `pal5_rrl_price_whelan_2019_subset.csv`, `WORKLOG.md`, `PLAN.md`
 - Commands run:
