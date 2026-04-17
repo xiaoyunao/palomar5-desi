@@ -1061,15 +1061,39 @@ def polyfit_arm(phi1: np.ndarray, mu: np.ndarray, mu_err: np.ndarray, mask: np.n
     m = mask & np.isfinite(phi1) & np.isfinite(mu)
     if np.sum(m) < 4:
         return None
-    x = phi1[m]
-    y = mu[m]
+    x = np.asarray(phi1[m], dtype=float)
+    y = np.asarray(mu[m], dtype=float)
     err = np.asarray(mu_err[m], dtype=float)
-    if np.isfinite(err).sum() >= 3:
-        w = 1.0 / np.clip(err, 0.03, None)
+    use = np.ones_like(x, dtype=bool)
+
+    for _ in range(3):
+        if np.sum(use) < 4:
+            break
+        if np.isfinite(err[use]).sum() >= 3:
+            w = 1.0 / np.clip(err[use], 0.03, None)
+        else:
+            w = None
+        try:
+            coeff = np.polyfit(x[use], y[use], deg=2, w=w)
+        except Exception:
+            return None
+
+        resid = y - np.polyval(coeff, x)
+        clip = max(0.35, 4.0 * mad_scale(resid[use], floor=0.05))
+        new_use = np.abs(resid) <= clip
+        # If clipping would leave too few bins, keep the previous fit.
+        if np.sum(new_use) < 4 or np.all(new_use == use):
+            return coeff
+        use = new_use
+
+    if np.sum(use) < 4:
+        return None
+    if np.isfinite(err[use]).sum() >= 3:
+        w = 1.0 / np.clip(err[use], 0.03, None)
     else:
         w = None
     try:
-        return np.polyfit(x, y, deg=2, w=w)
+        return np.polyfit(x[use], y[use], deg=2, w=w)
     except Exception:
         return None
 
@@ -1152,11 +1176,13 @@ def save_density_map_with_track(tab_members: Table, tab_fit: Table, out_png: Pat
     x = np.asarray(tab_fit["phi1_center"], dtype=float)
     mu = np.asarray(tab_fit["mu"], dtype=float)
     sig = np.asarray(tab_fit["sigma"], dtype=float)
-    ok = success & np.isfinite(mu) & np.isfinite(sig)
+    track_poly = np.asarray(tab_fit["track_poly"], dtype=float) if "track_poly" in tab_fit.colnames else np.full(len(tab_fit), np.nan)
+    mu_plot = np.where(np.isfinite(track_poly), track_poly, mu)
+    ok = success & np.isfinite(mu_plot) & np.isfinite(sig)
     if np.any(ok):
-        plt.plot(x[ok], mu[ok], lw=2.0, color="C0")
-        plt.plot(x[ok], mu[ok] + sig[ok], "--", lw=1.2, color="C1")
-        plt.plot(x[ok], mu[ok] - sig[ok], "--", lw=1.2, color="C2")
+        plt.plot(x[ok], mu_plot[ok], lw=2.0, color="C0")
+        plt.plot(x[ok], mu_plot[ok] + sig[ok], "--", lw=1.2, color="C1")
+        plt.plot(x[ok], mu_plot[ok] - sig[ok], "--", lw=1.2, color="C2")
 
     plt.xlim(xlo, xhi)
     plt.ylim(ylo, yhi)

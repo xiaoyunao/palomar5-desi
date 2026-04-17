@@ -176,6 +176,16 @@ Phase 0 预期输出：
 
 ## Current status
 
+- background 拟合主线当前已暂停；后续主线重新锚定到 `step4c + step3b(control+MAP)`。
+- 当前主线输出目录改为：
+  - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417`
+  - 其中：
+    - `step4c_outputs/`
+    - `step4c_step3b_outputs_control/`
+- `pal5_step3b_selection_aware_1d_model.py` 已做一个保守的主线修复：
+  - arm quadratic 在拟合 `track_poly` 时做轻量 outlier clipping
+  - `qc_step3b_density_phi12_local.png` 用平滑后的 `track_poly` 画主 track
+- 这样可以避免像旧 `step4c_step3b_outputs_control` 里 `phi1=7.75` 那个 raw local-fit 点把右侧 track 在 local density QC 图里拉坏。
 - 仓库已恢复基础结构。
 - `pal5_preprocess_step1.py` 已重建并通过语法检查。
 - 运行目录中已有一版旧预处理产物，但当前仓库还没有记录一次正式 Phase 0 rerun。
@@ -241,6 +251,35 @@ Phase 0 预期输出：
   - 不再叠加 contour / grayscale full-CMD 风格
   - Hess 的显示 parent sample 改为 full z-locus parent，而不是 `20 < g0 < 23` strict-mag-limited sample
   - 当前推荐图为 `step4c_outputs/qc_step4c_segment_cmds_stylefixed_fullhess.png`
+- step5b hybrid empirical-background experiment 已完成，但当前判断为 **not adoptable**：
+  - `n_success = 0 / 41`
+  - `track_poly_trailing = null`
+  - `track_poly_leading = null`
+  - `|phi1| < 8 integrated stars = 0`
+  - 41 个 bin 全部报 `Desired error not necessarily achieved due to precision loss.`
+- 当前解释：
+  - step5b 没有重现 step5 的 `sigma_max` blow-up，但 fixed-total-count + empirical-template + weak-log-warp 的 MAP 优化在当前参数化下整体不可识别，导致所有 bin 都被 success gate 淘汰。
+- 后续若继续 background 线，优先方向应是：
+  - 检查局部 fit 的 success 判据是否过严
+  - 检查 BFGS / Hessian 近奇异导致的“precision loss”是否把本可用 bin 全部误杀
+  - 只在明确 root cause 后再考虑 step5c，而不是直接增大背景自由度
+- step5d weakly-curved sideband background 已完成默认参数试跑，当前结论是 **不优于 step5c**：
+  - `n_success = 36 / 41`
+  - `n_success_excluding_cluster = 34`
+  - `|phi1| < 8 integrated stars = 4468`
+  - `trailing/leading_abs8 = 1.436`
+  - `trailing/leading_abs5 = 1.594`
+  - near-cluster width `= 0.130 deg`
+  - leading `[5, 8]` max width `= 0.450 deg`
+  - trailing `[-15, -5]` max width `= 0.550 deg`
+- 当前解释：
+  - step5d 保持了 sideband-anchored family 的稳定性，没有回到 step5b 那种不可识别或 step5 那种撞边失稳。
+  - 但弱曲率二次背景在当前正则强度下没有压低 counts，反而让 integrated counts 比 step5c 还高，并且把 outer trailing width 拉回接近 step4c baseline。
+- 当前工作排序：
+  - `step4c + step3b(control+MAP)` 仍是 frozen working baseline v2
+  - 当前继续推进主线时，优先使用 `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417`
+  - `step5c` 仍是当前最值得保留的 background-upgrade 对照
+  - `step5d` 只有在更强正则或更窄 sideband 参数下出现显著改观时才值得继续
 - step 4b MSTO-weighted refined-DM selection 已完成，并已串联 step 3b / step 3c：
   - `step4b_outputs/` 已生成 refined members、MSTO-weighted DM anchors、DM track 和 QC 图
   - `step4b_step3b_outputs_control/`: `n_success = 39 / 41`, `n_success_excluding_cluster = 37`

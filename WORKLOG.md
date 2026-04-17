@@ -1,6 +1,146 @@
 # WORKLOG
 
+## 2026-04-17
+
+- Task: 暂停 background 线，回到 step4c 主线；修复 `step4c_step3b_outputs_control` 右侧 track 掉点问题，并在 `Pal5` 下新建独立主线 rerun 目录。
+- Files changed: `pal5_step3b_selection_aware_1d_model.py`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `git status --short --branch`
+  - `git branch --show-current`
+  - `git fetch --all --prune`
+  - `git log --oneline --decorate --graph -n 15 --all`
+  - `sed -n '1,260p' WORKLOG.md`
+  - `sed -n '1,240p' PLAN.md`
+  - `sed -n '1,320p' /Users/island/Desktop/Pal5/step4c_step3b_outputs_control/pal5_step3b_summary.json`
+  - `python - <<'PY' ... inspect step4c_step3b_outputs_control/pal5_step3b_profiles.csv right-side bins ... PY`
+  - `view_image /Users/island/Desktop/Pal5/step4c_step3b_outputs_control/qc_step3b_density_phi12_local.png`
+  - `python - <<'PY' ... inspect mu_prior values in step3b_outputs_control and step4c_step3b_outputs_control ... PY`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile /Users/island/Desktop/Palomar 5/pal5_step3b_selection_aware_1d_model.py /Users/island/Desktop/Palomar 5/pal5_step4c_rrlprior_dm_selection.py`
+  - `mkdir -p /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_outputs /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Palomar 5/pal5_step4c_rrlprior_dm_selection.py --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --rrl-anchor-csv /Users/island/Desktop/Pal5/pal5_rrl_price_whelan_2019_subset.csv --rrl-cache-csv /Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_rrl_enriched.csv --output-dir /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_outputs --output-members /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_outputs/pal5_step4c_rrlprior_members.fits`
+  - `PYTHONWARNINGS=ignore '/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/Palomar 5/pal5_step3b_selection_aware_1d_model.py --signal /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_outputs/pal5_step4c_rrlprior_members.fits --preproc /Users/island/Desktop/Pal5/final_g25_preproc.fits --step2-summary /Users/island/Desktop/Pal5/step2_outputs/pal5_step2_summary.json --iso /Users/island/Desktop/Pal5/pal5.dat --mu-prior-file /Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt --eta-mode control --sampler map --outdir /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/pal5_step3b_summary.json`
+  - `python - <<'PY' ... inspect rerun step3b_profiles.csv right-side bins ... PY`
+  - `view_image /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/qc_step3b_density_phi12_local.png`
+- Key findings:
+  - 旧 `step4c_step3b_outputs_control/qc_step3b_density_phi12_local.png` 的右侧掉点来自 `phi1 = 7.75` 这个成功 bin 的 raw fit：
+    - `mu = 0.617`
+    - `mu_prior = 1.969`
+    - `track_resid = -1.447`
+  - 问题不在 `mu_prior` 文件；右侧 prior 是平滑且正常的。异常来自单个 local fit 落入了明显错误的 mode。
+  - 对 `step3b` 做了两个最小主线修复：
+    - arm quadratic fit 现在会对 raw track points 做轻量 outlier clipping，避免明显跳臂点污染 `track_poly`
+    - `qc_step3b_density_phi12_local.png` 现在用平滑后的 `track_poly` 画主 track，而不是把所有 raw `mu` 直接硬连成折线
+  - 新主线 rerun 目录为：
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417`
+  - 新目录中的 step4c rerun 与旧 working baseline v2 计数一致：
+    - `refined_selected = 456,496`
+    - `DM(phi1=-15) = 16.803`
+    - `DM(phi1=+8) = 16.540`
+  - 新目录中的 step3b rerun 也保持了主 summary 稳定：
+    - `n_success = 40 / 41`
+    - `n_success_excluding_cluster = 38`
+    - `leading_width_max_5to8 = 0.301`
+    - `trailing_width_max_m15to5 = 0.535`
+  - 修复后的 `qc_step3b_density_phi12_local.png` 已不再出现右端掉点；右臂主 track 现在随平滑 `track_poly` 连续上升。
+- Validation result:
+  - `pal5_step3b_selection_aware_1d_model.py` 与 `pal5_step4c_rrlprior_dm_selection.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_outputs/*`
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/*`
+  - 目视确认：
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/qc_step3b_density_phi12_local.png`
+      右侧掉点已消失。
+- Remaining issues:
+  - raw fit table 中 `phi1 = 7.75` 的 local mode 仍存在于 `mu` 列，但已不再污染平滑 track 或主线 local density QC 图。
+  - 若后续要把 raw profile 本身也清洗，可再考虑把“明显跳臂”的 bin 从 success 集里剔除；当前主线先不改 summary 口径。
+- Next step:
+  - 将 `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417` 作为当前主线输出目录继续往后推进，不再继续往旧 `step4c_outputs/` / `step4c_step3b_outputs_control/` 上叠加主线结果。
+
+- Task: 运行 step5d sideband-anchored weakly-curved background experiment，测试在冻结 step4c baseline 上把 step5c 的固定线性背景升级为弱曲率二次背景。
+- Files changed: `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `sed -n '1,320p' /Users/island/Desktop/PAL5_STEP5D_CODEX_INSTRUCTIONS.md`
+  - `sed -n '1,520p' /Users/island/Desktop/pal5_step5d_sideband_curved_bg.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile /Users/island/Desktop/pal5_step5d_sideband_curved_bg.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/pal5_step5d_sideband_curved_bg.py --signal /Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_rrlprior_members.fits --mu-prior-file /Users/island/Desktop/Pal5/step4c_step3b_outputs_control/pal5_step3b_mu_prior.txt --output-dir /Users/island/Desktop/Pal5/step5d_outputs_control_map --phi1-min -20 --phi1-max 10 --phi1-step 0.75 --window-scale 1.5 --fit-halfwidth 1.5 --bg-inner 0.8 --bg-outer 1.5 --bin-size-phi2 0.05 --min-signal-stars 60 --delta-mu-min -0.40 --delta-mu-max 0.40 --delta-mu-step 0.01 --sigma-min 0.04 --sigma-max 0.60 --sigma-step 0.01 --lambda-slope 5.0 --lambda-curv 80.0`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step5d_outputs_control_map/pal5_step5d_summary.json`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step5d_outputs_control_map/pal5_step5d_report.md`
+  - `python - <<'PY' ... read pal5_step5d_profiles.csv and count boundary/sigma hits ... PY`
+  - `ls -lh /Users/island/Desktop/Pal5/step5d_outputs_control_map`
+- Key findings:
+  - step5d 主运行完成并写出结果，但脚本尾部存在一个与主模型无关的残留错误：
+    - `NameError: name 'script' is not defined`
+    - 该错误发生在输出目录已写完之后，不影响 `step5d_outputs_control_map/` 中的结果文件。
+  - 稳定性较 step5b 明显更好，但较 step5c 略退：
+    - `n_success = 36 / 41`
+    - `n_success_excluding_cluster = 34`
+    - `track_poly_trailing` / `track_poly_leading` 都存在
+    - 没有 `sigma_min` / `sigma_max` 撞边；5 个失败 bin 全部是 `best_on_grid_boundary`
+  - 形态学上：
+    - near-cluster width `= 0.130 deg`
+    - leading `[5, 8]` max width `= 0.450 deg`
+    - trailing `[-15, -5]` max width `= 0.550 deg`
+  - 计数仍然偏高，而且比 step5c 更高：
+    - `|phi1| < 8 integrated stars = 4468`
+    - `trailing/leading_abs8 = 1.436`
+    - `trailing/leading_abs5 = 1.594`
+  - 这说明：给 step5c 的 sideband-anchored 背景加入弱曲率自由度，在当前正则强度下没有带来更好的 stream/background 分解，反而让 counts 更高、outer trailing width 回到接近 step4c baseline 的水平。
+- Validation result:
+  - `pal5_step5d_sideband_curved_bg.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step5d_outputs_control_map/pal5_step5d_summary.json`
+    - `/Users/island/Desktop/Pal5/step5d_outputs_control_map/pal5_step5d_report.md`
+    - `/Users/island/Desktop/Pal5/step5d_outputs_control_map/pal5_step5d_profiles.csv`
+    - `/Users/island/Desktop/Pal5/step5d_outputs_control_map/qc_step5d_local_fits_examples.png`
+    - `/Users/island/Desktop/Pal5/step5d_outputs_control_map/qc_step5d_template_examples.png`
+    - `/Users/island/Desktop/Pal5/step5d_outputs_control_map/pal5_step5d_stream_track.png`
+    - `/Users/island/Desktop/Pal5/step5d_outputs_control_map/pal5_step5d_stream_width.png`
+    - `/Users/island/Desktop/Pal5/step5d_outputs_control_map/pal5_step5d_linear_density.png`
+    - `/Users/island/Desktop/Pal5/step5d_outputs_control_map/qc_step5d_local_density_phi12_log.png`
+- Remaining issues:
+  - 若继续沿 weakly-curved background 方向走，需要先去掉脚本尾部的残留 `NameError`。
+  - 当前默认正则下，step5d 没有改善 step5c 的 counts 偏高问题。
+- Next step:
+  - 继续把 step5c 视为当前“最稳定但仍过量”的背景升级参照；若要推进 step5d，应优先尝试更强正则或更窄 sidebands，而不是直接接受默认结果。
+
 ## 2026-04-14
+
+- Task: 运行 step5b hybrid empirical-background experiment，在冻结的 step4c selection-upgraded baseline 上只替换背景线。
+- Files changed: `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `sed -n '1,280p' /Users/island/Desktop/PAL5_STEP5B_CODEX_INSTRUCTIONS.md`
+  - `sed -n '1,420p' /Users/island/Desktop/pal5_step5b_hybrid_bg_model.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile /Users/island/Desktop/pal5_step5b_hybrid_bg_model.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' /Users/island/Desktop/pal5_step5b_hybrid_bg_model.py --signal /Users/island/Desktop/Pal5/step4c_outputs/pal5_step4c_rrlprior_members.fits --mu-prior-file /Users/island/Desktop/Pal5/step4c_step3b_outputs_control/pal5_step3b_mu_prior.txt --output-dir /Users/island/Desktop/Pal5/step5b_outputs_control_map`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step5b_outputs_control_map/pal5_step5b_report.md`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step5b_outputs_control_map/pal5_step5b_summary.json`
+  - `python - <<'PY' ... read pal5_step5b_profiles.csv and count notes/sigma hits ... PY`
+  - `ls -lh /Users/island/Desktop/Pal5/step5b_outputs_control_map`
+- Key findings:
+  - step5b 没有通过 adoptability test，而且比 step5a 更早退化：`n_success = 0 / 41`，`n_success_excluding_cluster = 0`。
+  - `track_poly_trailing = null`，`track_poly_leading = null`。
+  - `|phi1| < 8` integrated stars = `0.0`，`trailing/leading_abs8 = nan`，`trailing/leading_abs5 = nan`。
+  - 没有出现 step5 那种 `sigma_max` 大面积撞边；相反，41 个 bin 全部以同一个优化失败信息结束：
+    - `Desired error not necessarily achieved due to precision loss.`
+  - 这说明 step5b 的主要问题不是“背景把宽度推炸”，而是当前 empirical-template + weak-warp + fixed-total-count 组合在所有局部窗里都没有形成可接受的可识别 MAP 解。
+  - `qc_step5b_local_fits_examples.png` 显示部分局部窗的模型曲线能勉强跟数据形状对齐，但由于所有 bin 都被判成 unusable，后续 density / width / track 图都是空图。
+- Validation result:
+  - `pal5_step5b_hybrid_bg_model.py` 语法检查通过。
+  - 实际生成：
+    - `/Users/island/Desktop/Pal5/step5b_outputs_control_map/pal5_step5b_summary.json`
+    - `/Users/island/Desktop/Pal5/step5b_outputs_control_map/pal5_step5b_profiles.csv`
+    - `/Users/island/Desktop/Pal5/step5b_outputs_control_map/pal5_step5b_report.md`
+    - `/Users/island/Desktop/Pal5/step5b_outputs_control_map/qc_step5b_local_fits_examples.png`
+    - `/Users/island/Desktop/Pal5/step5b_outputs_control_map/pal5_step5b_linear_density.png`
+    - `/Users/island/Desktop/Pal5/step5b_outputs_control_map/pal5_step5b_stream_width.png`
+    - `/Users/island/Desktop/Pal5/step5b_outputs_control_map/pal5_step5b_stream_track.png`
+    - `/Users/island/Desktop/Pal5/step5b_outputs_control_map/qc_step5b_local_phi12_log.png`
+- Remaining issues:
+  - 需要弄清楚为什么当前 MAP 判据把所有 `precision loss` bin 全部视为失败，尽管局部图上有些拟合看起来并非完全病态。
+  - 如果后续继续走 empirical background 方向，下一版应优先排查 success gate / Hessian 近奇异 / 参数重参数化，而不是再直接扩大背景自由度。
+- Next step:
+  - 将 step5b 视为“不 adoptable 的第一版 hybrid-bg 试验”，先分析优化失败门槛，再决定是否做 step5c。
 
 - Task: 采纳 step4c plotting patch v3，并将其作为当前有效的 CMD style-fix 收入仓库与远端。
 - Files changed: `pal5_step4c_plotting_patch_v3.py`, `PAL5_STEP4C_PLOTTING_PATCH_V3.md`, `PLAN.md`, `WORKLOG.md`
