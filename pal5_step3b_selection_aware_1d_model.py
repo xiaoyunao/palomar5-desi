@@ -118,6 +118,7 @@ RAW_TILT_MIN = -6.0
 RAW_TILT_MAX = 6.0
 MU_PRIOR_SIGMA = 0.35
 MU_START_OFFSETS = (-0.12, 0.0, 0.12)
+TRACK_PLOT_OUTLIER_ABS = 0.35
 
 # Optional sampling.
 DEFAULT_SAMPLER = "auto"  # auto | emcee | map
@@ -1176,8 +1177,15 @@ def save_density_map_with_track(tab_members: Table, tab_fit: Table, out_png: Pat
     x = np.asarray(tab_fit["phi1_center"], dtype=float)
     mu = np.asarray(tab_fit["mu"], dtype=float)
     sig = np.asarray(tab_fit["sigma"], dtype=float)
+    cluster = np.asarray(tab_fit["cluster_bin"], dtype=bool) if "cluster_bin" in tab_fit.colnames else np.zeros(len(tab_fit), dtype=bool)
     track_poly = np.asarray(tab_fit["track_poly"], dtype=float) if "track_poly" in tab_fit.colnames else np.full(len(tab_fit), np.nan)
-    mu_plot = np.where(np.isfinite(track_poly), track_poly, mu)
+    # Keep the density-map overlay as close as possible to the raw local-fit track,
+    # and only fall back to the arm-wise quadratic when a bin is an obvious outlier.
+    # This preserves the cluster-region shape while still suppressing pathological
+    # local-fit failures like the right-arm dip near phi1 ~ 7.75.
+    resid = mu - track_poly
+    bad_raw = (~cluster) & np.isfinite(track_poly) & np.isfinite(resid) & (np.abs(resid) > TRACK_PLOT_OUTLIER_ABS)
+    mu_plot = np.where(bad_raw, track_poly, mu)
     ok = success & np.isfinite(mu_plot) & np.isfinite(sig)
     if np.any(ok):
         plt.plot(x[ok], mu_plot[ok], lw=2.0, color="C0")

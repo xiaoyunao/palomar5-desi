@@ -2,6 +2,275 @@
 
 ## 2026-04-17
 
+- Task: 新建独立 `stream` 环境并启动 mock-stream global-track first-pass run。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `which conda`
+  - `conda env list`
+  - `uname -m`
+  - `conda create -y --solver libmamba -n stream -c conda-forge python=3.11 gala astropy emcee pandas scipy numpy gsl`
+  - `conda create -y --solver libmamba -p /Users/island/opt/anaconda3/envs/stream -c conda-forge python=3.11 gala astropy emcee pandas scipy numpy gsl`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... import numpy, scipy, pandas, astropy, emcee, gala ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... import gala.coordinates/gala.dynamics/mockstream/gala.potential ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... load_observed_track(mainline step3b profile csv) ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' pal5_mock_track_fit_refactor.py --track /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/pal5_step3b_profiles.csv --outdir /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly --nwalkers 48 --burnin 200 --steps 600`
+  - `ps -o pid,etime,%cpu,%mem,command -p 51771`
+  - `ls -lh /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly`
+- Key findings:
+  - 旧 `astro` 环境里的 `gala` 链接问题通过新建 `stream` 隔离环境绕开了。
+  - `stream` 环境最终成功装入：
+    - `python 3.11.15`
+    - `numpy 2.4.3`
+    - `scipy 1.17.1`
+    - `pandas 3.0.2`
+    - `astropy 7.2.0`
+    - `emcee 3.1.6`
+    - `gala 1.9.1`
+  - `gala.coordinates` / `gala.dynamics.mockstream` / `gala.potential` 均可正常导入。
+  - `pal5_mock_track_fit_refactor.py` 在 `stream` 环境中能正确读取当前主线 track 输入：
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/pal5_step3b_profiles.csv`
+    - 成功节点数：`40`
+  - first-pass run 已启动，当前输出目录：
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly`
+  - 当前已确认写出：
+    - `observed_track_used.fits`
+  - 运行中的主进程：
+    - `PID 51771`
+    - 单核 CPU 持续接近 `100%`
+- Validation result:
+  - 新环境导入验证通过。
+  - 脚本输入阶段通过，真实 MCMC 运行已开始。
+- Remaining issues:
+  - 该 run 计算量较大，当前会话内尚未完成；暂时还没有 `mcmc_samples.csv` / `mcmc_summary.csv` 等最终产物。
+  - `emcee` 缺少 `tqdm`，因此没有进度条；但这不影响实际计算。
+- Next step:
+  - 等待 `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly` 中出现样本与 summary 文件，再检查 first-pass 是否稳定收敛。
+
+- Task: 将 mock-track first pass 改成多进程并行，并重跑当前 mainline track-only fit。
+- Files changed: `pal5_mock_track_fit_refactor.py`, `WORKLOG.md`
+- Commands run:
+  - `sysctl -n hw.ncpu`
+  - `sed -n '1,260p' pal5_mock_track_fit_refactor.py`
+  - `sed -n '260,920p' pal5_mock_track_fit_refactor.py`
+  - `python -m py_compile pal5_mock_track_fit_refactor.py`
+  - `python pal5_mock_track_fit_refactor.py --help | rg 'ncores|mock-stream global track fit' -n`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' pal5_mock_track_fit_refactor.py --track /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/pal5_step3b_profiles.csv --outdir /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly --ncores 6 --nwalkers 48 --burnin 200 --steps 600`
+  - `ps -Ao pid,ppid,%cpu,%mem,command | rg 'pal5_mock_track_fit_refactor.py|spawn_main|resource_tracker'`
+  - `cat /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/mcmc_summary.csv`
+  - `head -n 5 /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/mcmc_samples.csv`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... load samples, compute median params, call save_best_fit_products() ... PY`
+- Key findings:
+  - 机器可用逻辑核心数为 `8`，并行 rerun 采用 `6` 个 worker。
+  - `pal5_mock_track_fit_refactor.py` 已加：
+    - `--ncores`
+    - `multiprocessing.get_context("spawn")`
+    - `emcee.EnsembleSampler(..., pool=pool)`
+  - 并行 rerun 确认生效：
+    - 主进程下拉起了 `6` 个 `spawn_main` worker
+    - 每个 worker 都在高 CPU 运行
+  - 并行 MCMC 已完成并写出：
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/mcmc_samples.csv`
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/mcmc_summary.csv`
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/chain.npy`
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/log_prob.npy`
+  - 当前 first-pass summary 中位数为：
+    - `log10_mhalo = 11.747`
+    - `r_s = 19.618`
+    - `q_z = 0.927`
+    - `pm_ra_cosdec = -2.301`
+    - `pm_dec = -2.250`
+    - `distance = 22.916`
+  - 在补写 best-fit mock 产品时又暴露出两个脚本 bug，并已修复：
+    - `generate_mock_stream()` 中 `galactic` 变量丢失
+    - `stream_w.to_coord_frame()` 传了 `coord.ICRS` 类而不是 `coord.ICRS()` 实例
+- Validation result:
+  - 并行版脚本语法检查通过。
+  - `--ncores` 帮助信息检查通过。
+  - 并行 MCMC rerun 已完成并写出 summary / samples。
+- Remaining issues:
+  - `best_fit_model_track.fits` / `best_fit_mock_stream_particles.fits` / `best_fit_params.csv` 的补写正在单进程继续运行；当前会话结束时尚未落盘。
+  - `emcee` 过程中仍会偶发 `red_blue.py` 的 `RuntimeWarning: invalid value encountered in scalar subtract`，但未阻止样本产出。
+- Next step:
+  - 等待当前 best-fit 补写进程完成，再检查 best-fit model track 与 particle products。
+
+- Task: 完成并行 mock-track rerun 的 best-fit 产品补写，并做一次初步产物检查。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `ls -lh /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly`
+  - `cat /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/best_fit_params.csv`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... read best_fit_model_track.fits and best_fit_mock_stream_particles.fits ... PY`
+- Key findings:
+  - best-fit 产品现已全部写出：
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/best_fit_model_track.fits`
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/best_fit_mock_stream_particles.fits`
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/best_fit_params.csv`
+  - best-fit 参数与 `mcmc_summary.csv` 中位数一致：
+    - `log10_mhalo = 11.7470`
+    - `r_s = 19.6178`
+    - `q_z = 0.9275`
+    - `pm_ra_cosdec = -2.3006`
+    - `pm_dec = -2.2496`
+    - `distance = 22.9158`
+  - best-fit model track:
+    - `40 / 40` 节点有效
+    - valid `phi1` 覆盖 `[-20.0, 9.25]`
+    - 每个节点 mock 粒子计数范围：`34 -> 2608`
+  - best-fit mock stream 粒子总数：
+    - `24,004`
+- Validation result:
+  - 并行 rerun 的样本、summary、best-fit track 和 best-fit particle 产品均已落盘。
+- Remaining issues:
+  - 这只是“技术上跑通”的 first pass；尚未做科学上的 goodness-of-fit / 残差检查。
+  - 从 `best_fit_model_track.fits` 的前几行看，外侧 `phi2_model` 数值较大，下一步应先和观测 track 直接画在一起，确认 Pal 5 frame / wrap / likelihood 是否满足预期。
+- Next step:
+  - 对 `observed_track_used.fits` 与 `best_fit_model_track.fits` 做一张直接对比图，先判断 first-pass 是“合理初值”还是“坐标/模型定义仍需再校”。
+
+- Task: 将 mock-stream global-track refactor 纳入主线仓库，并补成可直接吃 `step3b` profile 表的 CLI 脚本。
+- Files changed: `pal5_mock_track_fit_refactor.py`, `PAL5_MOCKFIT_REFACTOR_NOTES.md`, `README.md`, `PLAN.md`, `WORKLOG.md`
+- Commands run:
+  - `git status --short --branch`
+  - `git branch --show-current`
+  - `git fetch --all --prune`
+  - `git log --oneline --decorate --graph -n 15 --all`
+  - `sed -n '1,240p' /Users/island/Desktop/pal5_mock_track_fit_refactor.py`
+  - `sed -n '241,520p' /Users/island/Desktop/pal5_mock_track_fit_refactor.py`
+  - `sed -n '521,920p' /Users/island/Desktop/pal5_mock_track_fit_refactor.py`
+  - `sed -n '1,240p' /Users/island/Desktop/pal5_mockfit_notes.md`
+  - `find /Users/island/Desktop/Pal5 -maxdepth 3 \\( -name '*track*.fits' -o -name '*track*.csv' -o -name '*track*.ecsv' \\) | sort`
+  - `python - <<'PY' ... inspect columns of *track*.fits/*.csv under /Users/island/Desktop/Pal5 ... PY`
+  - `python -m py_compile pal5_mock_track_fit_refactor.py`
+  - `python pal5_mock_track_fit_refactor.py --help`
+  - `python - <<'PY' ... load_observed_track() on mainline step3b profile table ... PY`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' - <<'PY' ... load_observed_track() and test m._import_gala() ... PY`
+- Key findings:
+  - 用户提供的 refactor 脚本主体合理，但直接纳入仓库前还缺两项主线化改造：
+    - 原版仍是 notebook-style `example_main()`，不适合当前仓库工作流
+    - 当前运行目录里并不存在单独的 `phi1/phi2/phi2_err` step4c track 表；现成可直接使用的是 `step3b` profile 表
+  - 因此仓库版脚本新增了 CLI，并自动兼容当前实际输入列名：
+    - `phi1_center -> phi1`
+    - `mu -> phi2`
+    - `mu_err -> phi2_err`
+    - `sigma -> width`
+    - `sigma_err -> width_err`
+    - 若存在 `success` 列，则默认只保留成功 bin
+  - 为了让脚本在未装完整科学栈的环境下至少还能 `--help` / 读 track 表，已把 `astropy.coordinates`、`gala`、`pandas`、`InterpolatedUnivariateSpline` 改成按需延迟导入。
+  - 当前 mainline track loader 验证通过：
+    - 输入：`/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/pal5_step3b_profiles.csv`
+    - 成功读取 `40` 个成功节点
+  - 当前真正阻塞实际 mock run 的不是脚本语法，而是 `astro` 环境里的 `gala` 动态库链接错误：
+    - `ImportError: ... symbol not found ... _gsl_interp2d_bicubic`
+- Validation result:
+  - `pal5_mock_track_fit_refactor.py` 语法检查通过。
+  - 普通 Python 下：
+    - `pal5_mock_track_fit_refactor.py --help` 通过
+    - `load_observed_track()` 读 mainline `step3b` profile 表通过
+  - `astro` 环境下：
+    - `load_observed_track()` 通过
+    - `_import_gala()` 失败，明确暴露当前 gala/GSL 链接问题
+- Remaining issues:
+  - 在修复 `astro` 环境里的 gala 链接前，不能完成真实 mock-stream 物理运行验证。
+- Next step:
+  - 修复 `astro` 环境中的 gala/GSL 依赖问题后，再对 `pal5_mock_track_fit_refactor.py` 进行一次真正的 track-only first pass。
+
+- Task: 排查 `mainline_step4c_rerun_20260417` 的 `qc_step3b_density_phi12_local.png` 中心 track 跳变，并修正 `step3b` local density 图的绘制逻辑。
+- Files changed: `pal5_step3b_selection_aware_1d_model.py`, `WORKLOG.md`
+- Commands run:
+  - `git status --short --branch`
+  - `git diff -- pal5_step3b_selection_aware_1d_model.py`
+  - `rg -n "track_poly|outlier|local density|qc_step3b_density_phi12_local|mu_plot|mu_prior|cluster" pal5_step3b_selection_aware_1d_model.py`
+  - `sed -n '1090,1205p' pal5_step3b_selection_aware_1d_model.py`
+  - `sed -n '1205,1315p' pal5_step3b_selection_aware_1d_model.py`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/step4c_step3b_outputs_control/pal5_step3b_summary.json`
+  - `sed -n '1,260p' /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/pal5_step3b_summary.json`
+  - `python - <<'PY' ... inspect old/new pal5_step3b_profiles.csv around phi1 ~ 0 ... PY`
+  - `git show HEAD~1:pal5_step3b_selection_aware_1d_model.py | sed -n '1170,1205p'`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile pal5_step3b_selection_aware_1d_model.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' - <<'PY' ... reload mainline step3b profiles, cast bool columns, and redraw qc_step3b_density_phi12_local.png / qc_step3b_density_phi12.png ... PY`
+- Key findings:
+  - `step4c_step3b_outputs_control/` 与 `mainline_step4c_rerun_20260417/.../pal5_step3b_summary.json` 的核心结果一致；问题不在 3b 拟合本身。
+  - 根因在 `save_density_map_with_track()` 的新绘图逻辑：
+    - 我把 density 图主线从 raw `mu` 改成了 `track_poly`
+    - 但 `track_poly` 是左右两臂分开二次拟合，并且显式排除了 `cluster_bin`
+    - 因此它在 `phi1 ~ 0` 处本来就会有一段不连续的 arm-to-arm 拼接
+  - 旧图之所以正常，是因为中心附近实际上画的是 raw local-fit `mu`，没有把两臂外推结果硬连过星团。
+- Validation result:
+  - `pal5_step3b_selection_aware_1d_model.py` 语法检查通过。
+  - 已重生成：
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/qc_step3b_density_phi12_local.png`
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/qc_step3b_density_phi12.png`
+  - 目视确认：中心跳变已消失；cluster 区域恢复为连续 track，同时右臂仍保留平滑 `track_poly` 的去噪效果。
+- Remaining issues:
+  - 第一版桥接只覆盖 `cluster_bin`，仍会让 `phi1=-1.25` 这个紧邻 cluster 的 bin 落在左臂二次曲线上，视觉上还有一个偏低点。
+- Next step:
+  - 将 density 图的 raw-track bridge 扩到星团两侧相邻一个 `phi1` bin。
+
+- Task: 扩大 `step3b` density-map track bridge，修正星团中心左侧紧邻 bin 的显示偏离。
+- Files changed: `pal5_step3b_selection_aware_1d_model.py`, `WORKLOG.md`
+- Commands run:
+  - `rg -n "CLUSTER_MASK_HALFWIDTH|WINDOW_WIDTH_PHI1|PHI1_STEP|phi1_step" pal5_step3b_selection_aware_1d_model.py`
+  - `python - <<'PY' ... compare mu vs track_poly around phi1 ~ 0 and test bridge widths 0.75 / 1.125 / 1.5 ... PY`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile pal5_step3b_selection_aware_1d_model.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' - <<'PY' ... redraw qc_step3b_density_phi12_local.png / qc_step3b_density_phi12.png after widening bridge ... PY`
+- Key findings:
+  - `phi1=-1.25` 这个点不是新拟合出来的异常，而是它本来就不在 `cluster_bin` 里，所以仍被左臂 `track_poly` 压低。
+  - 仅覆盖 `cluster_bin` 的桥接不足以保证视觉连续；把桥接区扩到 `|phi1| <= CLUSTER_MASK_HALFWIDTH + PHI1_STEP = 1.5 deg` 后，中心两侧最邻近的非-cluster bin 都会改画 raw `mu`。
+- Validation result:
+  - 语法检查通过。
+  - 已重新生成 mainline rerun 的两张 density 图。
+  - 目视确认：`phi1=-1.25` 左侧偏点已消失，中心附近 track 连续。
+- Remaining issues:
+  - 当前修改仍然只作用于 density 图显示层；`track_poly` / `track_resid` 表本身未改。
+- Next step:
+  - 若后续还想统一 `track_resid` 的中心定义，可再单独设计 cluster 邻域的专门桥接/插值方案。
+
+- Task: 将 `step3b` density-map track 规则从“中心桥接”改为“默认 raw，仅替换明显离群坏点”，使结果更贴近旧图。
+- Files changed: `pal5_step3b_selection_aware_1d_model.py`, `WORKLOG.md`
+- Commands run:
+  - `python - <<'PY' ... compare old/new mu and track_poly around phi1 ~ 0 ... PY`
+  - `python - <<'PY' ... test bridge widths 1.5 / 2.25 / 3.0 / 4.0 in the center region ... PY`
+  - `python - <<'PY' ... rank |mu - track_poly| residuals and inspect right-arm bins 5 <= phi1 <= 9 ... PY`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' -m py_compile pal5_step3b_selection_aware_1d_model.py`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' - <<'PY' ... redraw qc_step3b_density_phi12_local.png / qc_step3b_density_phi12.png with residual-based outlier replacement ... PY`
+- Key findings:
+  - 用户指出的“比旧图仍偏”是对的；问题不只是中心 jump，而是中心附近多个 bin 仍被 `track_poly` 覆盖，所以整体形状和旧图不一致。
+  - 桥接区半宽再怎么调，本质上都还是在大块区域内画 `track_poly`，不满足“除坏点外尽量保持旧图”的要求。
+  - 更合理的规则是：
+    - density 图默认画 raw local-fit `mu`
+    - 仅当非-cluster bin 满足 `|mu - track_poly| > 0.35 deg` 时，才用 `track_poly` 替换
+  - 在当前主线 rerun 里，该规则主要只会替换右臂明显病态的 `phi1=7.75`，并顺带压住 `phi1=8.5` 的连带偏差；中心附近则回到旧图形状。
+- Validation result:
+  - 语法检查通过。
+  - 已重新生成 mainline rerun 的两张 density 图。
+  - 目视确认：中心区域现在与旧图基本一致，同时右端掉点仍被修掉。
+- Remaining issues:
+  - 该阈值 (`0.35 deg`) 目前是为当前 Pal 5 主线经验设定；若将来迁移到别的数据集，可能需要改成相对阈值或基于 `mu_err` 的判据。
+- Next step:
+  - 保持这套 residual-based 替换规则作为当前主线 density-map overlay 逻辑，除非后续发现新的异常 bin。
+
+- Task: 新会话初始化检查，恢复当前仓库上下文并确认项目是否需要重新初始化。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `git status --short --branch`
+  - `git branch --show-current`
+  - `git fetch --all --prune`
+  - `git log --oneline --decorate --graph -n 15 --all`
+  - `ls -1`
+  - `sed -n '1,220p' WORKLOG.md`
+  - `sed -n '1,220p' PLAN.md`
+  - `sed -n '1,220p' README.md`
+- Key findings:
+  - 仓库已初始化完成，当前分支为 `main`，且 `HEAD` 与 `origin/main` 对齐在 `ea30154`。
+  - `README.md`、`WORKLOG.md`、`PLAN.md` 均已存在，无需补建基础文件。
+  - 当前工作区有两个未跟踪文件：
+    - `PAL5_STEP4C_PLOTTING_PATCH_AND_BASELINE.md`
+    - `pal5_step4c_plotting_patch.py`
+- Validation result:
+  - 会话初始化检查完成，项目可直接继续现有主线工作。
+- Remaining issues:
+  - 需由后续任务决定是否纳入或清理上述未跟踪文件。
+- Next step:
+  - 基于现有 `PLAN.md` 继续当前 step4c 主线或后续分析任务。
+
 - Task: 暂停 background 线，回到 step4c 主线；修复 `step4c_step3b_outputs_control` 右侧 track 掉点问题，并在 `Pal5` 下新建独立主线 rerun 目录。
 - Files changed: `pal5_step3b_selection_aware_1d_model.py`, `WORKLOG.md`, `PLAN.md`
 - Commands run:

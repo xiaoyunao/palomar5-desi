@@ -280,6 +280,17 @@ Phase 0 预期输出：
   - 当前继续推进主线时，优先使用 `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417`
   - `step5c` 仍是当前最值得保留的 background-upgrade 对照
   - `step5d` 只有在更强正则或更窄 sideband 参数下出现显著改观时才值得继续
+- mock-stream 主线已开始从旧 notebook 迁移到独立脚本：
+  - 仓库内新增 `pal5_mock_track_fit_refactor.py`
+  - 新脚本不再从观测 catalog 重新提取 track，而是直接吃已有 track 表
+  - 当前仓库里的实际默认输入应优先使用：
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/pal5_step3b_profiles.csv`
+  - 因为当前运行目录里并不存在单独的 `phi1/phi2/phi2_err` step4c track 表，所以脚本已兼容 `step3b` profile 列名别名：
+    - `phi1_center -> phi1`
+    - `mu -> phi2`
+    - `mu_err -> phi2_err`
+    - `sigma -> width`
+    - `sigma_err -> width_err`
 - step 4b MSTO-weighted refined-DM selection 已完成，并已串联 step 3b / step 3c：
   - `step4b_outputs/` 已生成 refined members、MSTO-weighted DM anchors、DM track 和 QC 图
   - `step4b_step3b_outputs_control/`: `n_success = 39 / 41`, `n_success_excluding_cluster = 37`
@@ -358,6 +369,12 @@ Phase 0 预期输出：
 4. refined-DM 系列对照目前可分为：
    - step 4: coarse-anchor refined DM, counts-oriented improvement
    - step 4b: MSTO-weighted refined DM, morphology-oriented improvement
+5. mock-stream 下一步不再回旧 notebook：
+   - 先用 `pal5_mock_track_fit_refactor.py` 对当前 mainline step3b track 做一次 track-only first pass
+   - 第一轮参数保持：
+     - free: `log10_mhalo, r_s, q_z, pm_ra_cosdec, pm_dec, distance`
+     - fixed: `q_y = 1`, `prog_mass = 2e4 Msun`
+   - 若第一轮稳定，再决定是否引入 width term、bar、或额外 halo/progenitor 自由度
    - step 4c: MSTO + RRL weak-prior refined DM, current working-baseline-v2 candidate
 5. 下一阶段优先讨论：
    - smoother global `DM(phi1)` model
