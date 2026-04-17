@@ -119,6 +119,11 @@ RAW_TILT_MAX = 6.0
 MU_PRIOR_SIGMA = 0.35
 MU_START_OFFSETS = (-0.12, 0.0, 0.12)
 TRACK_PLOT_OUTLIER_ABS = 0.35
+TRACK_COHERENCE_ABS = 0.30
+SIGMA_COHERENCE_MIN_RATIO = 0.60
+SIGMA_COHERENCE_MAX_RATIO = 2.50
+MU_CLEAN_ERR_FLOOR = 0.08
+SIGMA_CLEAN_ERR_FLOOR = 0.05
 
 # Optional sampling.
 DEFAULT_SAMPLER = "auto"  # auto | emcee | map
@@ -227,6 +232,27 @@ def smooth_track_by_arm(phi1: np.ndarray, mu: np.ndarray) -> np.ndarray:
         if win < 5:
             continue
         out[idx] = savgol_filter(sub, window_length=win, polyorder=2, mode="interp")
+    return out
+
+
+def smooth_profile_by_arm(phi1: np.ndarray, values: np.ndarray) -> np.ndarray:
+    out = np.array(values, dtype=float, copy=True)
+    for arm_mask in (phi1 <= 0.0, phi1 >= 0.0):
+        idx = np.where(arm_mask)[0]
+        if idx.size == 0:
+            continue
+        sub = np.array(out[idx], dtype=float, copy=True)
+        finite = np.isfinite(sub)
+        if finite.sum() == 0:
+            continue
+        if finite.sum() == 1:
+            sub[~finite] = sub[finite][0]
+        else:
+            sub[~finite] = np.interp(phi1[idx][~finite], phi1[idx][finite], sub[finite])
+        win = min(9, idx.size if idx.size % 2 == 1 else idx.size - 1)
+        if win >= 5:
+            sub = savgol_filter(sub, window_length=win, polyorder=2, mode="interp")
+        out[idx] = sub
     return out
 
 
@@ -1103,7 +1129,7 @@ def append_track_polynomials(tab: Table) -> Dict[str, Optional[np.ndarray]]:
     phi1 = np.asarray(tab["phi1_center"], dtype=float)
     mu = np.asarray(tab["mu"], dtype=float)
     mu_err = np.asarray(tab["mu_err"], dtype=float)
-    success = np.asarray(tab["success"], dtype=bool)
+    success = np.asarray(tab["fit_success"] if "fit_success" in tab.colnames else tab["success"], dtype=bool)
     cluster = np.asarray(tab["cluster_bin"], dtype=bool)
 
     trail_mask = success & ~cluster & (phi1 <= -0.75)
@@ -1125,11 +1151,143 @@ def append_track_polynomials(tab: Table) -> Dict[str, Optional[np.ndarray]]:
     return {"trailing": coeff_tr, "leading": coeff_ld}
 
 
+def append_clean_track_columns(tab: Table) -> Dict[str, int]:
+    phi1 = np.asarray(tab["phi1_center"], dtype=float)
+    mu = np.asarray(tab["mu"], dtype=float)
+    mu_err = np.asarray(tab["mu_err"], dtype=float)
+    sigma = np.asarray(tab["sigma"], dtype=float)
+    sigma_err = np.asarray(tab["sigma_err"], dtype=float)
+    fit_success = np.asarray(tab["success"], dtype=bool)
+    cluster = np.asarray(tab["cluster_bin"], dtype=bool)
+    track_poly = np.asarray(tab["track_poly"], dtype=float)
+    track_resid = np.asarray(tab["track_resid"], dtype=float)
+
+    sigma_smooth = smooth_profile_by_arm(phi1, np.where(fit_success & ~cluster, sigma, np.nan))
+    sigma_log = np.full(len(tab), np.nan, dtype=float)
+    sigma_log_err = np.full(len(tab), np.nan, dtype=float)
+    m_sig = fit_success & ~cluster & np.isfinite(sigma) & (sigma > 0)
+    sigma_log[m_sig] = np.log(sigma[m_sig])
+    sigma_log_err[m_sig] = np.where(
+        np.isfinite(sigma_err[m_sig]) & (sigma_err[m_sig] > 0),
+        sigma_err[m_sig] / sigma[m_sig],
+        0.20,
+    )
+    coeff_sig_tr = polyfit_arm(phi1, sigma_log, sigma_log_err, m_sig & (phi1 <= -0.75))
+    coeff_sig_ld = polyfit_arm(phi1, sigma_log, sigma_log_err, m_sig & (phi1 >= 0.75))
+    sigma_poly = np.full(len(tab), np.nan, dtype=float)
+    if coeff_sig_tr is not None:
+        m = phi1 <= 0.0
+        sigma_poly[m] = np.exp(np.polyval(coeff_sig_tr, phi1[m]))
+    if coeff_sig_ld is not None:
+        m = phi1 >= 0.0
+        sigma_poly[m] = np.exp(np.polyval(coeff_sig_ld, phi1[m]))
+    m_poly = np.isfinite(sigma_poly)
+    sigma_smooth[m_poly] = sigma_poly[m_poly]
+    sigma_resid = sigma - sigma_smooth
+
+    track_coherent = np.ones(len(tab), dtype=bool)
+    m_track = fit_success & ~cluster & np.isfinite(track_poly) & np.isfinite(track_resid)
+    track_coherent[m_track] = np.abs(track_resid[m_track]) <= TRACK_COHERENCE_ABS
+
+    width_coherent = np.ones(len(tab), dtype=bool)
+    m_width = fit_success & ~cluster & np.isfinite(sigma) & np.isfinite(sigma_smooth) & (sigma_smooth > 0)
+    ratio = np.full(len(tab), np.nan, dtype=float)
+    ratio[m_width] = sigma[m_width] / sigma_smooth[m_width]
+    width_coherent[m_width] = (
+        (ratio[m_width] >= SIGMA_COHERENCE_MIN_RATIO)
+        & (ratio[m_width] <= SIGMA_COHERENCE_MAX_RATIO)
+    )
+
+    final_success = fit_success.copy()
+    final_success[~cluster] = fit_success[~cluster] & track_coherent[~cluster] & width_coherent[~cluster]
+
+    mu_clean = np.array(mu, dtype=float, copy=True)
+    m_replace_mu = (~cluster) & np.isfinite(track_poly) & ~final_success
+    mu_clean[m_replace_mu] = track_poly[m_replace_mu]
+
+    mu_clean_err = np.array(mu_err, dtype=float, copy=True)
+    bad_mu_err = ~np.isfinite(mu_clean_err)
+    mu_clean_err[bad_mu_err] = MU_CLEAN_ERR_FLOOR
+    m_incoh_mu = (~cluster) & np.isfinite(mu_clean)
+    mu_clean_err[m_incoh_mu] = np.maximum(
+        mu_clean_err[m_incoh_mu],
+        np.maximum(np.abs(track_resid[m_incoh_mu]), MU_CLEAN_ERR_FLOOR),
+    )
+
+    sigma_clean = np.array(sigma, dtype=float, copy=True)
+    m_replace_sigma = (~cluster) & np.isfinite(sigma_smooth) & (~final_success | ~width_coherent)
+    sigma_clean[m_replace_sigma] = sigma_smooth[m_replace_sigma]
+
+    sigma_clean_err = np.array(sigma_err, dtype=float, copy=True)
+    bad_sig_err = ~np.isfinite(sigma_clean_err)
+    sigma_clean_err[bad_sig_err] = SIGMA_CLEAN_ERR_FLOOR
+    m_incoh_sig = (~cluster) & np.isfinite(sigma_clean)
+    sigma_clean_err[m_incoh_sig] = np.maximum(
+        sigma_clean_err[m_incoh_sig],
+        np.maximum(np.abs(sigma_resid[m_incoh_sig]), SIGMA_CLEAN_ERR_FLOOR),
+    )
+
+    source = np.full(len(tab), "raw_fit", dtype="U24")
+    source[cluster] = "cluster"
+    source[(~cluster) & fit_success & ~track_coherent] = "smoothed_track"
+    source[(~cluster) & fit_success & track_coherent & ~width_coherent] = "smoothed_width"
+    source[(~cluster) & fit_success & ~final_success & ~width_coherent & ~track_coherent] = "smoothed_track_width"
+    source[(~cluster) & ~fit_success & np.isfinite(track_poly)] = "smoothed_from_failed"
+    source[(~cluster) & ~fit_success & ~np.isfinite(track_poly)] = "failed"
+
+    clean_use = (~cluster) & np.isfinite(mu_clean) & np.isfinite(mu_clean_err)
+
+    tab["fit_success"] = fit_success
+    tab["track_coherent"] = track_coherent
+    tab["width_coherent"] = width_coherent
+    tab["sigma_smooth"] = sigma_smooth
+    tab["sigma_poly"] = sigma_poly
+    tab["sigma_resid"] = sigma_resid
+    tab["sigma_ratio_to_smooth"] = ratio
+    tab["mu_clean"] = mu_clean
+    tab["mu_clean_err"] = mu_clean_err
+    tab["sigma_clean"] = sigma_clean
+    tab["sigma_clean_err"] = sigma_clean_err
+    tab["clean_source"] = np.asarray(source, dtype="U24")
+    tab["clean_use"] = clean_use
+    tab["success"] = final_success
+
+    return {
+        "n_fit_success": int(np.sum(fit_success)),
+        "n_final_success": int(np.sum(final_success)),
+        "n_track_incoherent": int(np.sum(fit_success & ~cluster & ~track_coherent)),
+        "n_width_incoherent": int(np.sum(fit_success & ~cluster & ~width_coherent)),
+        "n_clean_use": int(np.sum(clean_use)),
+    }
+
+
+def write_mockfit_track_table(tab: Table, out_csv: Path, out_fits: Path) -> int:
+    clean_use = np.asarray(tab["clean_use"], dtype=bool)
+    sub = tab[clean_use]
+
+    out = Table()
+    out["phi1"] = np.asarray(sub["phi1_center"], dtype=float)
+    out["phi2"] = np.asarray(sub["mu_clean"], dtype=float)
+    out["phi2_err"] = np.asarray(sub["mu_clean_err"], dtype=float)
+    out["width"] = np.asarray(sub["sigma_clean"], dtype=float)
+    out["width_err"] = np.asarray(sub["sigma_clean_err"], dtype=float)
+    out["success"] = np.ones(len(sub), dtype=bool)
+    out["source"] = np.asarray(sub["clean_source"], dtype="U24")
+    out["phi2_raw"] = np.asarray(sub["mu"], dtype=float)
+    out["width_raw"] = np.asarray(sub["sigma"], dtype=float)
+    out["track_poly"] = np.asarray(sub["track_poly"], dtype=float)
+    out["sigma_smooth"] = np.asarray(sub["sigma_smooth"], dtype=float)
+    out.write(out_fits, overwrite=True)
+    out.write(out_csv, format="ascii.csv", overwrite=True)
+    return len(out)
+
+
 def summarize_results(tab: Table, poly_coeffs: Dict[str, Optional[np.ndarray]], meta: Dict[str, object]) -> Dict[str, object]:
     phi1 = np.asarray(tab["phi1_center"], dtype=float)
     success = np.asarray(tab["success"], dtype=bool)
+    fit_success = np.asarray(tab["fit_success"], dtype=bool) if "fit_success" in tab.colnames else success
     cluster = np.asarray(tab["cluster_bin"], dtype=bool)
-    sigma = np.asarray(tab["sigma"], dtype=float)
+    sigma = np.asarray(tab["sigma_clean"] if "sigma_clean" in tab.colnames else tab["sigma"], dtype=float)
     lin = np.asarray(tab["linear_density"], dtype=float)
 
     m_lead = success & ~cluster & (phi1 > 0.0) & np.isfinite(sigma)
@@ -1139,6 +1297,7 @@ def summarize_results(tab: Table, poly_coeffs: Dict[str, Optional[np.ndarray]], 
     out = dict(meta)
     out.update({
         "n_bins": int(len(tab)),
+        "n_fit_success": int(np.sum(fit_success)),
         "n_success": int(np.sum(success)),
         "n_success_excluding_cluster": int(np.sum(success & ~cluster)),
         "track_poly_trailing": poly_coeffs["trailing"].tolist() if poly_coeffs["trailing"] is not None else None,
@@ -1147,6 +1306,12 @@ def summarize_results(tab: Table, poly_coeffs: Dict[str, Optional[np.ndarray]], 
         "max_width_trailing": float(np.nanmax(sigma[m_trail])) if np.any(m_trail) else None,
         "integrated_stream_stars_excluding_cluster": float(np.nansum(lin[m_dens] * WINDOW_WIDTH_PHI1)) if np.any(m_dens) else None,
     })
+    if "track_coherent" in tab.colnames:
+        out["n_track_incoherent"] = int(np.sum(fit_success & ~cluster & ~np.asarray(tab["track_coherent"], dtype=bool)))
+    if "width_coherent" in tab.colnames:
+        out["n_width_incoherent"] = int(np.sum(fit_success & ~cluster & ~np.asarray(tab["width_coherent"], dtype=bool)))
+    if "clean_use" in tab.colnames:
+        out["n_mockfit_track_nodes"] = int(np.sum(np.asarray(tab["clean_use"], dtype=bool)))
     return out
 
 
@@ -1175,15 +1340,15 @@ def save_density_map_with_track(tab_members: Table, tab_fit: Table, out_png: Pat
     cb.set_label(r"counts / deg$^2$")
 
     x = np.asarray(tab_fit["phi1_center"], dtype=float)
-    mu = np.asarray(tab_fit["mu"], dtype=float)
-    sig = np.asarray(tab_fit["sigma"], dtype=float)
+    mu = np.asarray(tab_fit["mu_clean"] if "mu_clean" in tab_fit.colnames else tab_fit["mu"], dtype=float)
+    sig = np.asarray(tab_fit["sigma_clean"] if "sigma_clean" in tab_fit.colnames else tab_fit["sigma"], dtype=float)
     cluster = np.asarray(tab_fit["cluster_bin"], dtype=bool) if "cluster_bin" in tab_fit.colnames else np.zeros(len(tab_fit), dtype=bool)
     track_poly = np.asarray(tab_fit["track_poly"], dtype=float) if "track_poly" in tab_fit.colnames else np.full(len(tab_fit), np.nan)
     # Keep the density-map overlay as close as possible to the raw local-fit track,
     # and only fall back to the arm-wise quadratic when a bin is an obvious outlier.
     # This preserves the cluster-region shape while still suppressing pathological
     # local-fit failures like the right-arm dip near phi1 ~ 7.75.
-    resid = mu - track_poly
+    resid = np.asarray(tab_fit["track_resid"], dtype=float) if "track_resid" in tab_fit.colnames else (mu - track_poly)
     bad_raw = (~cluster) & np.isfinite(track_poly) & np.isfinite(resid) & (np.abs(resid) > TRACK_PLOT_OUTLIER_ABS)
     mu_plot = np.where(bad_raw, track_poly, mu)
     ok = success & np.isfinite(mu_plot) & np.isfinite(sig)
@@ -1242,8 +1407,8 @@ def save_radec_map(tab_members: Table, out_png: Path) -> None:
 
 def save_track_plot(tab_fit: Table, poly_coeffs: Dict[str, Optional[np.ndarray]], out_png: Path) -> None:
     x = np.asarray(tab_fit["phi1_center"], dtype=float)
-    mu = np.asarray(tab_fit["mu"], dtype=float)
-    mu_err = np.asarray(tab_fit["mu_err"], dtype=float)
+    mu = np.asarray(tab_fit["mu_clean"] if "mu_clean" in tab_fit.colnames else tab_fit["mu"], dtype=float)
+    mu_err = np.asarray(tab_fit["mu_clean_err"] if "mu_clean_err" in tab_fit.colnames else tab_fit["mu_err"], dtype=float)
     success = np.asarray(tab_fit["success"], dtype=bool)
     cluster = np.asarray(tab_fit["cluster_bin"], dtype=bool)
 
@@ -1271,7 +1436,7 @@ def save_track_plot(tab_fit: Table, poly_coeffs: Dict[str, Optional[np.ndarray]]
 def save_track_resid_plot(tab_fit: Table, out_png: Path) -> None:
     x = np.asarray(tab_fit["phi1_center"], dtype=float)
     r = np.asarray(tab_fit["track_resid"], dtype=float)
-    rerr = np.asarray(tab_fit["mu_err"], dtype=float)
+    rerr = np.asarray(tab_fit["mu_clean_err"] if "mu_clean_err" in tab_fit.colnames else tab_fit["mu_err"], dtype=float)
     success = np.asarray(tab_fit["success"], dtype=bool)
     cluster = np.asarray(tab_fit["cluster_bin"], dtype=bool)
     m = success & ~cluster & np.isfinite(r)
@@ -1288,8 +1453,14 @@ def save_track_resid_plot(tab_fit: Table, out_png: Path) -> None:
 
 def save_profile_plot(tab_fit: Table, ycol: str, yerrcol: str, ylabel: str, title: str, out_png: Path) -> None:
     x = np.asarray(tab_fit["phi1_center"], dtype=float)
-    y = np.asarray(tab_fit[ycol], dtype=float)
-    yerr = np.asarray(tab_fit[yerrcol], dtype=float)
+    use_ycol = ycol
+    use_yerrcol = yerrcol
+    if ycol == "sigma" and "sigma_clean" in tab_fit.colnames:
+        use_ycol = "sigma_clean"
+    if yerrcol == "sigma_err" and "sigma_clean_err" in tab_fit.colnames:
+        use_yerrcol = "sigma_clean_err"
+    y = np.asarray(tab_fit[use_ycol], dtype=float)
+    yerr = np.asarray(tab_fit[use_yerrcol], dtype=float)
     success = np.asarray(tab_fit["success"], dtype=bool)
     cluster = np.asarray(tab_fit["cluster_bin"], dtype=bool)
 
@@ -1390,14 +1561,6 @@ def save_eta_examples(template_cache: Dict[float, TemplateBundle], centers: np.n
 def choose_default_mu_prior_file(user_value: str) -> str:
     if user_value:
         return user_value
-    candidates = [
-        "step3_outputs_hw15/pal5_step3_pass1_prior_track.txt",
-        "step3_outputs/pal5_step3_pass1_prior_track.txt",
-        "pal5_step3_pass1_prior_track.txt",
-    ]
-    for c in candidates:
-        if os.path.exists(c):
-            return c
     return ""
 
 
@@ -1480,12 +1643,19 @@ def main() -> None:
 
     tab = results_to_table(results)
     poly_coeffs = append_track_polynomials(tab)
+    clean_stats = append_clean_track_columns(tab)
     fits_path = outdir / "pal5_step3b_profiles.fits"
     csv_path = outdir / "pal5_step3b_profiles.csv"
     tab.write(fits_path, overwrite=True)
     tab.write(csv_path, format="ascii.csv", overwrite=True)
     print(f"[write] {fits_path}")
     print(f"[write] {csv_path}")
+
+    mockfit_csv_path = outdir / "pal5_step3b_mockfit_track.csv"
+    mockfit_fits_path = outdir / "pal5_step3b_mockfit_track.fits"
+    n_mockfit = write_mockfit_track_table(tab, mockfit_csv_path, mockfit_fits_path)
+    print(f"[write] {mockfit_fits_path}")
+    print(f"[write] {mockfit_csv_path}")
 
     summary = summarize_results(
         tab,
@@ -1509,6 +1679,11 @@ def main() -> None:
             "window_width_phi1": WINDOW_WIDTH_PHI1,
             "fit_halfwidth": FIT_HALFWIDTH,
             "min_signal_stars": MIN_SIGNAL_STARS,
+            "track_coherence_abs": TRACK_COHERENCE_ABS,
+            "sigma_coherence_min_ratio": SIGMA_COHERENCE_MIN_RATIO,
+            "sigma_coherence_max_ratio": SIGMA_COHERENCE_MAX_RATIO,
+            "n_mockfit_track_nodes_written": int(n_mockfit),
+            **clean_stats,
         },
     )
     with open(outdir / "pal5_step3b_summary.json", "w", encoding="utf-8") as f:

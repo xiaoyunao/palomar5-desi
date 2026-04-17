@@ -2,6 +2,122 @@
 
 ## 2026-04-17
 
+- Task: 清理 `step4c_step3b_outputs_control` 中的 raw track 跳点与尾端过窄宽度，并输出 mock-fit 专用 cleaned track。
+- Files changed: `pal5_step3b_selection_aware_1d_model.py`, `WORKLOG.md`
+- Commands run:
+  - `sed -n '1,1545p' pal5_step3b_selection_aware_1d_model.py`
+  - `python - <<'PY' ... inspect mainline step4c_step3b pal5_step3b_profiles.csv / summary.json ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' -m py_compile pal5_step3b_selection_aware_1d_model.py`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' pal5_step3b_selection_aware_1d_model.py ... --outdir /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control_cleantrack`
+  - `'/Users/island/opt/anaconda3/envs/astro/bin/python' pal5_step3b_selection_aware_1d_model.py ... --outdir /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control_cleantrack_astro`
+  - `python - <<'PY' ... compare old/new step3b profiles and cleaned mockfit track ... PY`
+- Key findings:
+  - 旧主线 `step4c_step3b_outputs_control/pal5_step3b_profiles.csv` 的确存在 raw local-fit 异常：
+    - `phi1=7.75` 的 `mu` 明显跳变
+    - 多个 trailing / leading 外侧 `sigma` 明显过小
+  - 旧主线 rerun 还在继承旧文件：
+    - `/Users/island/Desktop/Pal5/step3b_outputs_control/pal5_step3b_mu_prior.txt`
+  - 已在 `pal5_step3b_selection_aware_1d_model.py` 中加入：
+    - 默认不再自动继承旧 `mu_prior_file`
+    - raw `fit_success` 与后处理 `success` 分离
+    - 基于 arm-wise smoothed `track_poly` 的 track coherence gate
+    - 基于 arm-wise smoothed width trend 的 width coherence gate
+    - `mu_clean` / `sigma_clean`
+    - `pal5_step3b_mockfit_track.fits/.csv`
+  - `stream` 环境下，去掉旧 `mu_prior` 后这套 MAP 优化会快速退化成全 bin `optimizer_failed`；同一脚本在 `astro` 环境中可正常完成 rerun。
+  - 成功完成的新输出目录是：
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control_cleantrack_astro`
+  - 新版关键统计：
+    - `n_fit_success = 38`
+    - `n_success = 29`
+    - `n_success_excluding_cluster = 27`
+    - `n_track_incoherent = 3`
+    - `n_width_incoherent = 8`
+    - `n_mockfit_track_nodes_written = 39`
+  - cleaned mockfit track 已把关键异常 bin 替换为平滑解：
+    - `phi1=7.75`: `mu 0.617 -> 2.208`
+    - `phi1=8.50`: `mu 2.148 -> 2.601`, `sigma 0.083 -> 0.139`
+    - `phi1=9.25`: `sigma 0.067 -> 0.115`
+    - 多个 trailing 外侧小宽度 bin 也已抬升到平滑宽度趋势
+- Validation result:
+  - 修改后的 step3b 脚本语法检查通过。
+  - `astro` 环境下已成功完成一次真实 rerun，并写出 profile / summary / cleaned mockfit track / QC 图。
+- Remaining issues:
+  - `stream` 环境下的 step3b MAP 数值行为与 `astro` 环境不一致，当前不适合直接承担该脚本的正式 rerun。
+- Next step:
+  - 若继续 mock-fit，应优先改用：
+    - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control_cleantrack_astro/pal5_step3b_mockfit_track.csv`
+  - 再检查新 QC 图是否满足你对 track 连续性和尾端宽度的直觉要求。
+
+- Task: 在 `stream` 环境下验证 mock-fit 后接可视化的轻量出图链路。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' -m py_compile pal5_mock_track_fit_refactor.py pal5_visualize_suite.py`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' pal5_mock_track_fit_refactor.py --help`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' pal5_visualize_suite.py --help`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... pal5_visualize_suite.load_observed_track(step3b profile csv) ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' pal5_visualize_suite.py --run-dir /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly --outdir /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/pal5_plots_smoke --skip-rv --skip-orbit-grid --skip-literature`
+  - `ls -1 /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/pal5_plots_smoke`
+- Key findings:
+  - `stream` 环境下两个脚本都能正常显示 `--help`。
+  - `pal5_visualize_suite.py` 已确认能直接读取当前主线 step3b profile 表，并自动识别：
+    - `phi1_center -> phi1`
+    - `mu -> phi2`
+    - `mu_err -> phi2_err`
+    - `sigma -> width`
+    - `sigma_err -> width_err`
+  - 对现有 run 目录的轻量 smoke 出图已完成，输出目录：
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/pal5_plots_smoke`
+  - 当前已确认落盘：
+    - `01_stream_overlay_pal5`
+    - `02_stream_overlay_tracks_only`
+    - `03_track_comparison_residual`
+    - `04_width_and_counts`
+    - `05_bonaca_style_summary`
+    - `06_mcmc_corner`
+    - `07_mcmc_chains`
+    - `08_mcmc_logprob`
+    - `09_bestfit_orbit`
+- Validation result:
+  - `stream` 环境下 mock-fit 到可视化的基础链路已打通。
+  - 轻量 smoke run 成功完成，未见新的代码级报错；仅出现一条 `AstropyDeprecationWarning`，不影响图片产出。
+- Remaining issues:
+  - 这次 smoke run 刻意跳过了 RV 图、orbit distance-grid 和 literature comparison，尚未验证全套重图。
+  - 还没有实际跑一次 `pal5_mock_track_fit_refactor.py --make-plots` 的完整端到端新 MCMC run。
+- Next step:
+  - 如果需要正式工作流验证，直接在下一次真实 mock-fit rerun 时加上 `--make-plots`，并按需决定是否保留 RV / orbit-grid 图。
+
+- Task: 将 mock-fit 主程序和可视化套件串联，并把可视化脚本纳入仓库。
+- Files changed: `pal5_mock_track_fit_refactor.py`, `pal5_visualize_suite.py`, `pal5_visualize_suite_usage.md`, `README.md`, `WORKLOG.md`
+- Commands run:
+  - `sed -n '1,240p' /Users/island/Desktop/pal5_visualize_suite_usage.md`
+  - `sed -n '1,320p' /Users/island/Desktop/pal5_visualize_suite.py`
+  - `sed -n '1,760p' pal5_mock_track_fit_refactor.py`
+  - `cp /Users/island/Desktop/pal5_visualize_suite.py /Users/island/Desktop/Palomar 5/pal5_visualize_suite.py`
+  - `cp /Users/island/Desktop/pal5_visualize_suite_usage.md /Users/island/Desktop/Palomar 5/pal5_visualize_suite_usage.md`
+  - `python -m py_compile pal5_mock_track_fit_refactor.py pal5_visualize_suite.py`
+  - `python pal5_mock_track_fit_refactor.py --help`
+  - `python pal5_visualize_suite.py --help`
+- Key findings:
+  - `pal5_visualize_suite.py` 原本可以直接消费 mock-fit 产物，但默认要求手动传 `--track-file`，因此和当前 first-pass 工作流之间还差最后一层串联。
+  - 现已把可视化套件纳入仓库，并在 mock-fit CLI 中新增：
+    - `--make-plots`
+    - `--visualize-script`
+    - `--plots-outdir`
+    - `--plot-star-*`
+    - `--plot-skip-*`
+  - mock-fit 现在会在 best-fit 产品写完后，自动调用 `pal5_visualize_suite.py`，默认把 `observed_track_used.fits` 作为观测 track 输入。
+  - `pal5_visualize_suite.py` 现已兼容：
+    - 若未显式给 `--track-file`，自动回退到 `run-dir/observed_track_used.fits`
+    - step3b profile 风格列名：`phi1_center/mu/mu_err/sigma/sigma_err`
+- Validation result:
+  - 两个脚本语法检查通过。
+  - 两个脚本的 `--help` 都能正常显示新接口。
+- Remaining issues:
+  - 还没有在完整 `stream` 环境里跑一次真实 `--make-plots` 端到端出图。
+- Next step:
+  - 用当前 `mockfit_mainline_step4c_trackonly` 目录做一次带 `--make-plots` 的真实 rerun 或补跑可视化，确认图片完整落盘。
+
 - Task: 新建独立 `stream` 环境并启动 mock-stream global-track first-pass run。
 - Files changed: `WORKLOG.md`
 - Commands run:

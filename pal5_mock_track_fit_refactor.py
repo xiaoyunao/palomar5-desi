@@ -30,6 +30,8 @@ import argparse
 from dataclasses import dataclass, field
 import multiprocessing as mp
 from pathlib import Path
+import subprocess
+import sys
 from typing import Any, Dict, Optional, Sequence
 
 import numpy as np
@@ -618,10 +620,18 @@ def run_mcmc(
     import emcee
     pd = _import_pandas()
 
+    effective_ncores = max(1, int(ncores))
+    if effective_ncores > 1 and sys.platform == "darwin":
+        print(
+            "[warn] disabling multiprocessing pool on macOS; "
+            "the long formal run deadlocked in SemLock/pipe synchronization."
+        )
+        effective_ncores = 1
+
     pool = None
-    if ncores > 1:
+    if effective_ncores > 1:
         ctx = mp.get_context("spawn")
-        pool = ctx.Pool(processes=min(ncores, nwalkers))
+        pool = ctx.Pool(processes=min(effective_ncores, nwalkers))
 
     try:
         sampler = emcee.EnsembleSampler(
@@ -690,6 +700,48 @@ def save_best_fit_products(
     return mock
 
 
+def run_visualization_suite(args: argparse.Namespace, outdir: Path) -> None:
+    script_path = Path(args.visualize_script)
+    if not script_path.is_absolute():
+        script_path = Path(__file__).resolve().parent / script_path
+    if not script_path.exists():
+        raise FileNotFoundError(f"Visualization script not found: {script_path}")
+
+    plots_outdir = Path(args.plots_outdir) if args.plots_outdir else outdir / "pal5_plots"
+    cmd = [
+        sys.executable,
+        str(script_path),
+        "--run-dir",
+        str(outdir),
+        "--track-file",
+        str(outdir / "observed_track_used.fits"),
+        "--core-script",
+        str(Path(__file__).resolve()),
+        "--outdir",
+        str(plots_outdir),
+    ]
+
+    if args.plot_star_file:
+        cmd.extend(["--star-file", args.plot_star_file])
+        cmd.extend(["--star-ra-col", args.plot_star_ra_col])
+        cmd.extend(["--star-dec-col", args.plot_star_dec_col])
+        if args.plot_star_distance_col:
+            cmd.extend(["--star-distance-col", args.plot_star_distance_col])
+        if args.plot_star_max_distance is not None:
+            cmd.extend(["--star-max-distance", str(args.plot_star_max_distance)])
+
+    if args.plot_skip_rv:
+        cmd.append("--skip-rv")
+    if args.plot_skip_rv_grids:
+        cmd.append("--skip-rv-grids")
+    if args.plot_skip_orbit_grid:
+        cmd.append("--skip-orbit-grid")
+    if args.plot_skip_literature:
+        cmd.append("--skip-literature")
+
+    subprocess.run(cmd, check=True)
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Pal 5 mock-stream global track fit")
     p.add_argument("--track", required=True, help="Observed track table path")
@@ -725,6 +777,18 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--distance-init", type=float, default=22.9)
     p.add_argument("--prog-mass", type=float, default=2.0e4)
     p.add_argument("--q-y", type=float, default=1.0)
+    p.add_argument("--make-plots", action="store_true", help="Run pal5_visualize_suite.py after best-fit products are written")
+    p.add_argument("--visualize-script", default="pal5_visualize_suite.py", help="Path to the visualization suite script")
+    p.add_argument("--plots-outdir", default=None, help="Visualization output directory; defaults to <outdir>/pal5_plots")
+    p.add_argument("--plot-star-file", default=None, help="Optional filtered star catalog for visualization background")
+    p.add_argument("--plot-star-ra-col", default="RA")
+    p.add_argument("--plot-star-dec-col", default="DEC")
+    p.add_argument("--plot-star-distance-col", default=None)
+    p.add_argument("--plot-star-max-distance", type=float, default=None)
+    p.add_argument("--plot-skip-rv", action="store_true", help="Skip all RV figures in the visualization suite")
+    p.add_argument("--plot-skip-rv-grids", action="store_true", help="Skip RV distance-grid figures in the visualization suite")
+    p.add_argument("--plot-skip-orbit-grid", action="store_true", help="Skip orbit distance-grid figures in the visualization suite")
+    p.add_argument("--plot-skip-literature", action="store_true", help="Skip q_z literature comparison in the visualization suite")
     return p.parse_args()
 
 
@@ -797,6 +861,9 @@ def main() -> None:
 
     best_params = best_fit_params_from_samples(samples, sampler_cfg)
     save_best_fit_products(observed, best_params, model_cfg, outdir)
+
+    if args.make_plots:
+        run_visualization_suite(args, outdir)
 
 
 if __name__ == "__main__":

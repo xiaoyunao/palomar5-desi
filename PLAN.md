@@ -251,6 +251,10 @@ Phase 0 预期输出：
   - 不再叠加 contour / grayscale full-CMD 风格
   - Hess 的显示 parent sample 改为 full z-locus parent，而不是 `20 < g0 < 23` strict-mag-limited sample
   - 当前推荐图为 `step4c_outputs/qc_step4c_segment_cmds_stylefixed_fullhess.png`
+- mock-track 可视化链路现已接通：
+  - `pal5_visualize_suite.py` 已纳入仓库
+  - `pal5_mock_track_fit_refactor.py` 可用 `--make-plots` 在 best-fit 产品落盘后自动出图
+  - 默认读取 `run-dir/observed_track_used.fits`，因此能直接吃当前 mock-fit 输出目录
 - step5b hybrid empirical-background experiment 已完成，但当前判断为 **not adoptable**：
   - `n_success = 0 / 41`
   - `track_poly_trailing = null`

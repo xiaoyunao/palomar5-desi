@@ -36,6 +36,7 @@ Phase 0 preprocessing baseline:
 - `pal5_step3b_selection_aware_1d_model.py`
 - `pal5_step4c_rrlprior_dm_selection.py`
 - `pal5_mock_track_fit_refactor.py`
+- `pal5_visualize_suite.py`
 
 ## Current working baseline
 
@@ -77,6 +78,32 @@ The script auto-detects either:
 
 - a clean track table with `phi1`, `phi2`, `phi2_err`
 - or the existing step3b profile table with `phi1_center`, `mu`, `mu_err`
+
+## Post-fit visualization
+
+The mock-fit script can now chain directly into the visualization suite after
+writing the best-fit products.
+
+Minimal example:
+
+```bash
+'/Users/island/opt/anaconda3/envs/stream/bin/python' pal5_mock_track_fit_refactor.py \
+  --track /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control/pal5_step3b_profiles.csv \
+  --outdir /Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly \
+  --ncores 6 \
+  --nwalkers 48 \
+  --burnin 200 \
+  --steps 600 \
+  --make-plots \
+  --plot-skip-rv-grids
+```
+
+By default this writes figures to:
+
+- `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly/pal5_plots`
+
+If `--make-plots` is used without `--track-file`, the visualization suite will
+read `observed_track_used.fits` from the mock-fit run directory automatically.
 
 ## Expected outputs from a real run
 
