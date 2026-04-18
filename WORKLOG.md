@@ -2,6 +2,28 @@
 
 ## 2026-04-18
 
+- Task: 按用户要求继续手动修正观测 track 端点，并用修正后的点重新拟合与重绘 Figure 2 / 3。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 02_obs_density_track_local / 03_bestfit_mock_vs_obs_local after modifying endpoint phi2 values used in both fit and plotting ... PY`
+- Key findings:
+  - 最左侧观测 track 点在原本 `+0.7` 的基础上又加了 `+0.5`，因此总修正为 `+1.2`。
+  - 最右侧两点进一步调整为：
+    - 倒数第二个点 `phi2 -= 0.1`
+    - 最后一个点 `phi2 -= 0.2`
+  - 上述修正同时用于：
+    - 观测点的显示
+    - trailing / leading 拟合
+  - Figure 2 / 3 已用修正后的端点重新落盘。
+- Validation result:
+  - 已确认以下文件更新：
+    - `02_obs_density_track_local.(png|pdf)`
+    - `03_bestfit_mock_vs_obs_local.(png|pdf)`
+- Remaining issues:
+  - 当前这些端点修正仍是手工注入的显示/拟合补丁，未回写进通用 plotter 或上游 profile 表。
+- Next step:
+  - 若这组端点修正确定为最终版，应整理进正式绘图脚本或单独的 poster 配置文件。
+
 - Task: 将 poster Figure 2 / 3 的 leading 臂颜色从紫色改为绿色，并保留当前中间版 Figure 2 分箱。
 - Files changed: `WORKLOG.md`
 - Commands run:
