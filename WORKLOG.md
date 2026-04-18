@@ -2,6 +2,45 @@
 
 ## 2026-04-18
 
+- Task: 将当前 poster 终版样式回写进 `pal5_poster_plotter_v3.py`，并把脚本与配套说明/模板同步进 repo。
+- Files changed: `WORKLOG.md`, `pal5_poster_plotter_v3.py`, `pal5_poster_plotter_v3_usage.md`, `pal5_q_mass_m20kpc_template.csv`
+- Commands run:
+  - `cp /Users/island/Desktop/pal5_poster_plotter_v3.py /Users/island/Desktop/Palomar 5/pal5_poster_plotter_v3.py`
+  - `cp /Users/island/Desktop/pal5_poster_plotter_v3_usage.md /Users/island/Desktop/Palomar 5/pal5_poster_plotter_v3_usage.md`
+  - `cp /Users/island/Desktop/pal5_q_mass_m20kpc_template.csv /Users/island/Desktop/Palomar 5/pal5_q_mass_m20kpc_template.csv`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' -m py_compile /Users/island/Desktop/pal5_poster_plotter_v3.py /Users/island/Desktop/Palomar 5/pal5_poster_plotter_v3.py`
+- Key findings:
+  - `pal5_poster_plotter_v3.py` 已不再停留在早期“通用默认版”，而是回写成当前 poster 终版逻辑：
+    - Figure 1 使用 step4c DM track + combined anchors + step2 summary
+    - Figure 2 使用当前终版的 observed-background、arm 分色、端点修正、背景图例
+    - Figure 3 使用当前终版的 mock particle cloud 叠观测 track，不再叠 best-fit mock track
+    - Figure 4 保持 standardized q-mass panel
+  - 配套 usage 文档也已更新到当前输入需求与用法。
+  - literature mass template 一并同步入 repo，便于后续独立复现。
+- Validation result:
+  - `pal5_poster_plotter_v3.py` 的桌面版和 repo 版都通过 `py_compile`
+- Remaining issues:
+  - 运行目录中的最终 PNG/PDF 仍然不在 repo 中；repo 只保留可复现脚本与文档。
+- Next step:
+  - 如需完全一键复现 poster 图，下一步可把当前 runtime 的实际命令也整理成一个固定 driver 或 Make target。
+
+- Task: 为 poster Figure 2 / 3 补充背景层图例项。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 02_obs_density_track_local / 03_bestfit_mock_vs_obs_local with explicit legend entries for observed stream background and mock stream particles ... PY`
+- Key findings:
+  - Figure 2 图例已显式加入 `observed stream background`
+  - Figure 3 图例已显式加入 `mock stream particles`
+  - 本次仅调整图例显示，不改拟合、端点修正或颜色方案
+- Validation result:
+  - 已确认以下文件更新：
+    - `02_obs_density_track_local.(png|pdf)`
+    - `03_bestfit_mock_vs_obs_local.(png|pdf)`
+- Remaining issues:
+  - repo 内仍未固化这些终版 poster 图参数；当前修改只作用于运行目录下的最终图
+- Next step:
+  - 若要长期复现，应把终版 legend 配置与样式参数整理回正式 plotter 脚本
+
 - Task: 按用户要求继续手动修正观测 track 端点，并用修正后的点重新拟合与重绘 Figure 2 / 3。
 - Files changed: `WORKLOG.md`
 - Commands run:

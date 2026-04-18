@@ -1,0 +1,9 @@
+reference,year,q,q_err_lo,q_err_hi,m20_nfw_1e11,m20_nfw_err_lo,m20_nfw_err_hi,highlight,notes
+This work,2026,,,,,,,1,Fill from the final morphology-only fit and convert to the common NFW M(<20 kpc) definition.
+Kupper et al. 2015,,,,,,,,0,Verify the paper's quoted quantity and convert to the common mass definition before plotting.
+Bovy et al. 2016 (Pal 5),,,,,,,,0,Verify the paper's quoted quantity and convert to the common mass definition before plotting.
+Posti & Helmi 2019,,,,,,,,0,Verify the paper's quoted quantity and convert to the common mass definition before plotting.
+Malhan & Ibata 2019,,,,,,,,0,Verify the paper's quoted quantity and convert to the common mass definition before plotting.
+Palau & Miralda-Escude 2023 (Pal 5),,,,,,,,0,Verify the paper's quoted quantity and convert to the common mass definition before plotting.
+Huang et al. 2024,,,,,,,,0,Verify the paper's quoted quantity and convert to the common mass definition before plotting.
+Nibauer et al. 2025,,,,,,,,0,Verify the paper's quoted quantity and convert to the common mass definition before plotting.
