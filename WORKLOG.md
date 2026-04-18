@@ -2,6 +2,24 @@
 
 ## 2026-04-18
 
+- Task: 将 poster Figure 2 / 3 的 leading 臂颜色从紫色改为绿色，并保留当前中间版 Figure 2 分箱。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 02_obs_density_track_local / 03_bestfit_mock_vs_obs_local with leading-arm fit bins and quadratic recolored to green ... PY`
+- Key findings:
+  - Figure 2 / 3 中 leading side 的观测 fit bins 与 leading quadratic 已从紫色改为绿色。
+  - Figure 2 继续保留当前中间版分箱：
+    - 比最细版本更宽
+    - 比早前较粗版本更细
+- Validation result:
+  - 已确认以下文件更新：
+    - `02_obs_density_track_local.(png|pdf)`
+    - `03_bestfit_mock_vs_obs_local.(png|pdf)`
+- Remaining issues:
+  - 本次改动只影响运行目录中的最终图，不涉及 repo 内绘图脚本逻辑。
+- Next step:
+  - 若需要长期复现这套配色，应把最终参数回写进 `pal5_poster_plotter_v3.py`。
+
 - Task: 按第六轮反馈调整 trailing 拟合锚点、fit-bin 分色、取消 mock 旋转并恢复 Figure 2 线性色标。
 - Files changed: `WORKLOG.md`
 - Commands run:
