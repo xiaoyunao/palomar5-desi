@@ -1,5 +1,358 @@
 # WORKLOG
 
+## 2026-04-18
+
+- Task: 按第六轮反馈调整 trailing 拟合锚点、fit-bin 分色、取消 mock 旋转并恢复 Figure 2 线性色标。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 02_obs_density_track_local / 03_bestfit_mock_vs_obs_local with shifted-leftmost-point trailing fit anchor, arm-colored fit bins, linear Figure 2 colorbar, no mock rotation, and 5x mock-track phi2 error bars ... PY`
+- Key findings:
+  - trailing 拟合现在使用了已上移 `phi2 + 0.7` 的最左侧观测 track 点作为约束点，不再使用原始未平移点。
+  - Figure 2 / 3 的 `fit bins` 已按 arm 分色：
+    - trailing side: 蓝色
+    - leading side: 紫色
+  - mock stream 与 mock track 的旋转已取消，恢复到未旋转坐标。
+  - Figure 3 的 mock-track error bar 已限制为 `phi2` 方向，并放大到 `5x` 以确保可见。
+  - Figure 2 的 colorbar 已从对数改回线性。
+- Validation result:
+  - 已确认以下文件更新：
+    - `02_obs_density_track_local.(png|pdf)`
+    - `03_bestfit_mock_vs_obs_local.(png|pdf)`
+- Remaining issues:
+  - 当前 legend 条目比最初版本更多，因为 fit bins 按左右 arm 分开标注。
+- Next step:
+  - 若需要更简洁 legend，可在不改图面元素的前提下压缩图例文字或合并 fit-bin 条目。
+
+- Task: 按第五轮反馈继续调整 poster Figure 1-3 的图例文字、arm 颜色、高阶 trailing 拟合和 mock 旋转角。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 01_dm_track_only with 'RRL stream priors' legend text ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 02_obs_density_track_local / 03_bestfit_mock_vs_obs_local with differently colored trailing/leading curves, cubic constrained trailing fit, 3 deg CCW mock rotation about (0,0), and heavier mock-track error bars ... PY`
+- Key findings:
+  - Figure 1：
+    - `RRL stream weak priors` 已改成 `RRL stream priors`
+  - Figure 2 / 3：
+    - trailing / leading quadratic 已改成不同颜色：
+      - trailing: 蓝色
+      - leading: 紫色
+    - trailing side 拟合已从受约束二次改成受约束三次多项式，以改善端点附近形状
+    - mock stream 粒子云与 mock track 的旋转已从 `5 deg` 改成绕 `(phi1, phi2) = (0, 0)` 逆时针 `3 deg`
+    - Figure 3 的 mock-track error bar 已进一步加粗加长并保留 caps，以确保在图面上清晰可见
+- Validation result:
+  - 已确认以下文件更新：
+    - `01_dm_track_only.(png|pdf)`
+    - `02_obs_density_track_local.(png|pdf)`
+    - `03_bestfit_mock_vs_obs_local.(png|pdf)`
+- Remaining issues:
+  - 当前仍是直接在最终图产物上迭代，尚未把这些终版参数系统整理回通用 plotter。
+- Next step:
+  - 若这版确认无误，再把最终样式参数固化进 `pal5_poster_plotter_v3.py`。
+
+- Task: 按第四轮反馈回调 poster Figure 1-3 的点大小、error bar、legend 位置、cluster 颜色和 mock 旋转。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 01_dm_track_only with MSTO error bars doubled relative to previous version ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 02_obs_density_track_local / 03_bestfit_mock_vs_obs_local with larger track markers, doubled error bars with caps, top-center legends, orange cluster bins, and 5 deg CCW rotation for mock stream + model track ... PY`
+- Key findings:
+  - Figure 1：
+    - MSTO photometric anchor 的 error bar 已在上一版基础上再乘 `2`
+    - RRL 两类 anchor 的 error bar 缩放保持不变
+  - Figure 2 / 3：
+    - track 点大小从严格 `qc_step3b_track` 的小点版本调回到更清楚的 poster 版大点
+    - 观测与 mock track 都已使用带双端 cap 的 error bar，长度乘 `2`
+    - legend 已移到图上部中间，避免遮挡主数据带
+    - observed cluster bins 改为橙色，以区别于蓝色 observed track
+    - mock stream 粒子云与 mock track 已整体逆时针旋转 `5 deg`
+- Validation result:
+  - 已确认以下文件更新：
+    - `01_dm_track_only.(png|pdf)`
+    - `02_obs_density_track_local.(png|pdf)`
+    - `03_bestfit_mock_vs_obs_local.(png|pdf)`
+- Remaining issues:
+  - 当前最终图样式仍是直接重绘产物，还未系统整理回通用 `pal5_poster_plotter_v3.py`。
+- Next step:
+  - 若该版确认可用，再统一把最终参数写回 plotter 脚本。
+
+- Task: 按第三轮反馈进一步细化 poster Figure 1-3 的物理命名、端点约束、track 样式和个别点位修正。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 01_dm_track_only with thinner DM errorbars, longer caps, and piecewise DM legend labels ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 02_obs_density_track_local and 03_bestfit_mock_vs_obs_local using qc_step3b_track marker/errorbar style, constrained non-cluster endpoints, blue observed / green mock track colors, and +0.7 shift on the leftmost observed track point ... PY`
+- Key findings:
+  - Figure 1：
+    - legend 已改成更物理化名称：`piecewise trailing DM` / `piecewise leading DM`
+    - error bar 主线较上一版减细约一半
+    - 两端 cap 长度加倍
+    - Figure 1 仍保持只在该图中使用缩短后的 DM error bar 比例
+  - Figure 2 / 3：
+    - trailing / leading quadratic 的端点约束已改为经过“除 cluster 两点外、最靠近星团中心的那两个观测 fit 点”
+      - trailing side 使用 `phi1=-1.25` 的非 cluster fit 点
+      - leading side 使用 `phi1=+1.00` 的非 cluster fit 点
+    - 观测 track 与 mock track 的 marker、大小、error bar 样式已统一到 `qc_step3b_track`：
+      - fit bins: `fmt='o', ms=3.5, lw=1.0, capsize=2`
+      - cluster bins: `fmt='s', ms=4.0, lw=1.0, capsize=2`
+      - arm quadratics: dashed, `lw=1.5`
+    - 颜色按用户要求改为：
+      - observed track / quadratics / cluster bins: 蓝色
+      - mock track: 绿色
+    - 最左侧观测 track 点（最小 `phi1`）在 Figure 2 / 3 的显示中已额外上移 `+0.7 deg`
+- Validation result:
+  - 已确认以下文件更新：
+    - `01_dm_track_only.(png|pdf)`
+    - `02_obs_density_track_local.(png|pdf)`
+    - `03_bestfit_mock_vs_obs_local.(png|pdf)`
+- Remaining issues:
+  - 当前这些精细样式修改仍然是直接重绘最终图，尚未系统回写进通用 `pal5_poster_plotter_v3.py`。
+- Next step:
+  - 若这版确认稳定，再把最终样式统一整理回通用 plotter 脚本，避免后续重复手工补图。
+
+- Task: 按用户第二轮反馈继续微调 poster Figure 1-3 的标题、error bar、track quadratic 约束和局部视窗。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 01_dm_track_only with updated title/legend/errorbar styling ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... redraw 02_obs_density_track_local and 03_bestfit_mock_vs_obs_local with constrained trailing quadratic, larger density bins, error bars, ylim=(-1.5,3.5) ... PY`
+- Key findings:
+  - Figure 1 已进一步调整为：
+    - title 改成 `MSTO + RR Lyrae anchors with DM fitting`
+    - 图例中去掉 `step2` 字样，只保留 `two-arm trailing/leading`
+    - MSTO / RRL error bar 再缩短到原始长度的约 `1/3`
+    - error bar 主线与 cap 都明显加粗
+  - Figure 2 / 3 的 trailing quadratic 已改成强制穿过靠近星团中心的右端 cluster-side 点（使用 `phi1=-0.5` cluster bin 作为 trailing side anchor 的约束二次拟合）。
+  - Figure 2 的 density 背景 bin 改大，以减少空白像素；Figure 2 / 3 的 y 轴统一改为 `-1.5` 到 `3.5`。
+  - Figure 2 / 3 的观测 track 点都已补上 `mu_clean_err` error bar；Figure 3 的 mock model track 也已补上 `phi2_model_err` error bar。
+- Validation result:
+  - 已确认以下文件更新：
+    - `01_dm_track_only.(png|pdf)`
+    - `02_obs_density_track_local.(png|pdf)`
+    - `03_bestfit_mock_vs_obs_local.(png|pdf)`
+- Remaining issues:
+  - 这些调整是直接基于当前主线产物重绘，没有同步回写到通用 `pal5_poster_plotter_v3.py`。
+- Next step:
+  - 若还要继续微调，建议下一轮明确指定需要锁死的 legend 顺序、线宽和 marker size，再统一整理进通用画图脚本。
+
+- Task: 按最终 poster 需求重绘 v3 的 Figure 1-3，并保留 Figure 4 不变。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... rewrite 01_dm_track_only / 02_obs_density_track_local / 03_bestfit_mock_vs_obs_local ... PY`
+  - `ls -l /Users/island/Desktop/Pal5/poster_figs_v3_actual/01_dm_track_only.* /Users/island/Desktop/Pal5/poster_figs_v3_actual/02_obs_density_track_local.* /Users/island/Desktop/Pal5/poster_figs_v3_actual/03_bestfit_mock_vs_obs_local.*`
+- Key findings:
+  - Figure 1 已切回 step4c 风格的 `qc_step4c_dm_track`，并落实以下样式调整：
+    - RRL cluster anchor 放大
+    - y 轴改为 `16.0-17.5`
+    - `step2` leading/trailing 两条虚线加粗
+    - combined `DM(phi1)` 加粗
+    - MSTO 与 RRL errorbar 都加两端短 cap，且 cap 长度减半
+  - Figure 2 已切回 step4c 后的局部 density 图风格：
+    - 底图改为对数 colorbar
+    - 删除原先叠加的三条线
+    - 改叠 `qc_step3b_track` 风格的点、cluster 方块、leading/trailing 两条虚线，并带 legend
+  - Figure 3 已移除观测星流背景，只保留：
+    - mock stream 粒子按 `v_los` 着色
+    - 观测 track 点与 cluster 方块
+    - 观测 leading/trailing 两条虚线
+    - best-fit mock track
+  - 更新后的输出目录：
+    - `/Users/island/Desktop/Pal5/poster_figs_v3_actual`
+- Validation result:
+  - 已确认以下文件于本次重绘后更新：
+    - `01_dm_track_only.(png|pdf)`
+    - `02_obs_density_track_local.(png|pdf)`
+    - `03_bestfit_mock_vs_obs_local.(png|pdf)`
+- Remaining issues:
+  - 当前改动直接写入最终图文件，没有另存“旧版”副本。
+- Next step:
+  - 若用户继续微调，直接在 `poster_figs_v3_actual/` 当前版本上迭代。
+
+- Task: 不重跑 MCMC，直接用现有 best-fit 参数补写 `n_stream_steps=3000` 的单条 best-fit stream 以检查长度恢复。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... load best_fit_params.csv; save_best_fit_products(..., StreamModelConfig(n_steps=3000)) ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... inspect best_fit_mock_stream_particles.fits and best_fit_model_track.fits ranges ... PY`
+- Key findings:
+  - 不需要先重跑整条 MCMC；直接用现有 `best_fit_params.csv` 补写一条 `3000-step` best-fit stream 就足以判断长度问题。
+  - 新输出目录：
+    - `/Users/island/Desktop/Pal5/mockfit_mainline_step4c_trackonly_bestfit3000`
+  - 新的覆盖范围：
+    - particles: `phi1 = [-18.21, +33.15]`
+    - valid model track: `phi1 = [-11.0, +7.0]`
+    - `n_valid_nodes = 23`
+  - 与之前 `1500-step` 主线相比，track 明显变长，说明短流的主因确实是 `n_stream_steps` 过小。
+- Validation result:
+  - `3000-step` best-fit only 产品已成功写出。
+- Remaining issues:
+  - 主线 `mockfit_mainline_step4c_trackonly/` 仍是旧的 `1500-step` best-fit 产品；若需要一致性，需要用更新后的默认值重跑 mockfit 或覆盖补写该目录。
+- Next step:
+  - 若只想先看形状，可直接检查 `mockfit_mainline_step4c_trackonly_bestfit3000/`；
+  - 若要让主线目录一致，重跑一次 `3000-step` mockfit。
+
+- Task: 解释 mock stream 过短原因，并重新测试 macOS 上的并行 MCMC 路径。
+- Files changed: `pal5_mock_track_fit_refactor.py`, `pal5_mainline_step2_to_mockfit.sh`, `PAL5_MAINLINE_STEP2_TO_MOCKFIT.md`, `WORKLOG.md`
+- Commands run:
+  - `rg -n "nsteps|MockStreamGenerator|release_every|n_particles" /Users/island/Desktop/Code/Parlomar5/simulate.ipynb`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... inspect best_fit_mock_stream_particles.fits phi1 range ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... compare n_stream_steps = 1500,3000,6000 valid node ranges ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' -u pal5_mock_track_fit_refactor.py ... --ncores 2 --mp-start-method spawn --burnin 2 --steps 2 --n-stream-steps 3000 ...`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' -u pal5_mock_track_fit_refactor.py ... --ncores 2 --mp-start-method fork --burnin 2 --steps 2 --n-stream-steps 3000 ...`
+- Key findings:
+  - mock stream 看起来过短的直接原因不是势模型本身，而是我之前把主线默认 `n_stream_steps` 从旧 notebook MCMC 常用的 `3000` 临时降到了 `1500`。
+  - 用当前 best-fit 参数比较：
+    - `1500`: valid model-track range 约 `phi1 = [-5.75, +6.25]`
+    - `3000`: valid model-track range 约 `phi1 = [-11.75, +7.0]`
+    - `6000`: valid model-track range 约 `phi1 = [-19.25, +7.0]`
+  - 当前粒子云本身并不只有 `±5 deg`：
+    - `1500` 时粒子已到约 `phi1 = [-9.7, +10.2]`
+    - 真正变短的是 node-based `best_fit_model_track`，因为边缘 node 的粒子数不够，过不了 `min_particles_per_node=16` 的有效性筛选。
+  - 已把主线默认 `MOCKFIT_N_STREAM_STEPS` 改回 `3000`。
+  - 并行 MCMC 代码路径已恢复，并新增：
+    - `--mp-start-method {spawn,fork,forkserver}`
+  - 但在当前 macOS 本机测试里，并行仍不稳定：
+    - `spawn`：能拉起 worker，但会出现 worker 卡住、采样不正常结束
+    - `fork`：两个 worker 都能高 CPU 启动，但测试 run 仍未正常落盘，最终出现卡在 `UE` 状态的残留进程
+- Validation result:
+  - 已确认短流问题来自 `n_stream_steps=1500`，并已把默认值改回 `3000`。
+  - 已确认并行代码可以启动 worker，但尚未在本机稳定完成一次并行 smoke MCMC。
+- Remaining issues:
+  - 当前 macOS 机器上的 multiprocessing + gala/emcee 组合仍不适合直接作为正式并行主线。
+  - 当前仍有两个 `UE` 状态残留进程（不可中断睡眠），需要系统层面自行回收或重启后清除。
+- Next step:
+  - 主线继续默认串行；如果要正式并行，优先转到 Linux / 远端环境再测。
+  - 如仍坚持本机并行，需要进一步替换并行后端或重构 likelihood 调度。
+
+- Task: 集成新的主线 driver，清空 runtime 中旧测试产物，并用 no-bar 主线重新跑通 `step2 -> step3b -> step4c -> step3b -> mockfit -> plots`。
+- Files changed: `pal5_mainline_step2_to_mockfit.sh`, `PAL5_MAINLINE_STEP2_TO_MOCKFIT.md`, `pal5_mock_track_fit_refactor.py`, `WORKLOG.md`, `PLAN.md`
+- Commands run:
+  - `cp /Users/island/Desktop/pal5_mainline_step2_to_mockfit.sh /Users/island/Desktop/Palomar 5/pal5_mainline_step2_to_mockfit.sh`
+  - `cp /Users/island/Desktop/PAL5_MAINLINE_STEP2_TO_MOCKFIT.md /Users/island/Desktop/Palomar 5/PAL5_MAINLINE_STEP2_TO_MOCKFIT.md`
+  - `bash -n pal5_mainline_step2_to_mockfit.sh`
+  - `python -m py_compile pal5_mock_track_fit_refactor.py pal5_visualize_suite.py`
+  - `find /Users/island/Desktop/Pal5 -mindepth 1 -maxdepth 1 ! -name 'final_g25_preproc.fits' ! -name 'pal5.dat' ! -name 'step3_outputs_hw15' -exec rm -rf {} +`
+  - `find /Users/island/Desktop/Pal5/step3_outputs_hw15 -mindepth 1 -type f ! -name 'pal5_step3_pass1_prior_track.txt' -delete`
+  - `CODE_DIR='/Users/island/Desktop/Palomar 5' DATA_DIR='/Users/island/Desktop/Pal5' PYTHON_PIPELINE='/Users/island/opt/anaconda3/envs/astro/bin/python' PYTHON_MOCKFIT='/Users/island/opt/anaconda3/envs/stream/bin/python' RESUME=0 RUN_PLOTS=1 '/Users/island/Desktop/Palomar 5/pal5_mainline_step2_to_mockfit.sh'`
+  - `find /Users/island/Desktop/Pal5 -name '.DS_Store' -delete`
+- Key findings:
+  - 已把新的主线 driver 和说明文件纳入 repo。
+  - 已把之前本地验证过的 mockfit 变更并回主线默认值：
+    - `ncores=1`
+    - `nwalkers=16`
+    - `burnin=5`
+    - `steps=5`
+    - `n_stream_steps=1500`
+    - `min_valid_fraction=0.30`
+  - 当前主线明确采用 no-bar mockfit：
+    - driver 默认 `MOCKFIT_INCLUDE_STATIC_BAR=0`
+    - plotting 默认跳过 `11` 到 `15`，只保留 `01` 到 `10`
+  - 已清空 `~/Desktop/Pal5` 中旧测试产物与无关脚本，只保留主线输入与新的主线输出。
+  - 新主线正式产物已全部写出：
+    - `step2_outputs/`
+    - `step3b_outputs_control/`
+    - `step4c_outputs/`
+    - `step4c_step3b_outputs_control/`
+    - `mockfit_mainline_step4c_trackonly/`
+  - 本次 mockfit 中位参数：
+    - `log10_mhalo = 11.744605`
+    - `r_s = 19.772633`
+    - `q_z = 0.933607`
+    - `pm_ra_cosdec = -2.288558`
+    - `pm_dec = -2.265269`
+    - `distance = 22.877126`
+- Validation result:
+  - 新 driver 语法检查通过。
+  - `pal5_mock_track_fit_refactor.py` 和 `pal5_visualize_suite.py` 语法检查通过。
+  - 主线一条龙 rerun 成功完成，mockfit 与 plotting 都正常结束。
+- Remaining issues:
+  - 当前默认 mockfit 配置仍是低成本 smoke / integration 级，不是正式长链高统计量 MCMC。
+  - 若后续要正式科学拟合，需要在当前 no-bar 主线基础上重新设计更高统计量但可接受 walltime 的采样方案。
+- Next step:
+  - 先检查新的 `step4c_step3b` track 与 `mockfit_mainline_step4c_trackonly/pal5_plots/01-10` 是否满足主线展示需求；
+  - 再决定是否提高 MCMC 统计量或改成两阶段采样。
+
+- Task: 对 smoke mock-fit 产物补跑可视化，并在重型 RV distance-grid 阶段前按用户要求中止。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' -u pal5_visualize_suite.py --run-dir /Users/island/Desktop/Pal5/mockfit_mainline_step4c_cleantrack_smoke_1500steps --outdir /Users/island/Desktop/Pal5/mockfit_mainline_step4c_cleantrack_smoke_1500steps/pal5_plots`
+  - `kill 98796`
+- Key findings:
+  - 可视化主链正常，已成功写出前 12 组图：
+    - `01` 到 `10` 的主图与 orbit distance-grid
+    - `11_rv_aitoff_bar_vs_nobar`
+    - `12_rv_radec_bar_vs_nobar`
+  - 最耗时阶段是后续 RV distance-grid：
+    - `13_rv_distance_grid_nobar`
+    - `14_rv_distance_grid_bar_vs_nobar`
+  - `15_qz_literature_comparison` 尚未运行到。
+- Validation result:
+  - 基础与中等成本可视化已经验证可正常落盘。
+- Remaining issues:
+  - 全套可视化尚未完整结束；当前缺 `13/14/15`。
+- Next step:
+  - 若只需快速补全，可重新运行并加 `--skip-rv-grids`；
+  - 若要完整全套，则需要预留更长 walltime 跑完 `13/14/15`。
+
+- Task: 用低成本参数完成 mock-fit smoke run，验证 MCMC 与 best-fit 产物写出链路。
+- Files changed: `WORKLOG.md`
+- Commands run:
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' -u pal5_mock_track_fit_refactor.py --track /Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417/step4c_step3b_outputs_control_cleantrack_astro/pal5_step3b_mockfit_track.csv --outdir /Users/island/Desktop/Pal5/mockfit_mainline_step4c_cleantrack_smoke_1500steps --ncores 1 --nwalkers 16 --burnin 5 --steps 5 --n-stream-steps 1500 --min-valid-fraction 0.30`
+  - `find /Users/island/Desktop/Pal5/mockfit_mainline_step4c_cleantrack_smoke_1500steps -maxdepth 1 -type f -ls | sort`
+- Key findings:
+  - 低成本 smoke 配置可以完整跑通：
+    - `nwalkers=16`
+    - `burnin=5`
+    - `steps=5`
+    - `n_stream_steps=1500`
+    - `min_valid_fraction=0.30`
+  - 该 run 已完整写出：
+    - `mcmc_samples.csv`
+    - `mcmc_summary.csv`
+    - `chain.npy`
+    - `log_prob.npy`
+    - `best_fit_model_track.fits`
+    - `best_fit_mock_stream_particles.fits`
+    - `best_fit_params.csv`
+  - 说明当前代码主链可正常结束，真正的问题是正式参数下单次 likelihood 成本过高，而不是“流程卡死不返回”。
+- Validation result:
+  - smoke run 成功，MCMC 与 best-fit 产品链路均通过。
+- Remaining issues:
+  - 正式配置 `n_stream_steps=6000, nwalkers=48, burnin=200, steps=200+` 的 walltime 仍然不可接受。
+- Next step:
+  - 需要在正式 run 前重新设计采样策略：
+    - 减少 `n_stream_steps`
+    - 降低自由度或 walkers
+    - 先做粗搜索/分阶段拟合，再决定最终正式参数
+
+- Task: 排查 single-core mock-fit `200/200` 测试长时间无产出的问题，并补充启动前计时诊断参数。
+- Files changed: `pal5_mock_track_fit_refactor.py`, `WORKLOG.md`
+- Commands run:
+  - `kill 13280`
+  - `sed -n '330,610p' pal5_mock_track_fit_refactor.py`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... time load_observed_track / generate_mock_stream / log_probability ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... scan n_stream_steps = 100,300,600,1000 ... PY`
+  - `'/Users/island/opt/anaconda3/envs/stream/bin/python' - <<'PY' ... scan n_stream_steps = 1500,2000,3000,4000,6000 ... PY`
+- Key findings:
+  - 卡点不在 `multiprocessing`，而在单次 `generate_mock_stream()` / `log_probability()` 成本过高。
+  - 在当前正式配置附近，单次评估耗时约：
+    - `generate_mock_stream(n_steps=6000) ~ 49 s`
+    - `log_probability(n_steps=6000) ~ 49 s`
+  - 因此 `nwalkers=48, burnin=200, steps=200` 的串行量级约为：
+    - `48 * 400 = 19200` 次评估
+    - 粗略 walltime 约 `10+` 天
+  - `n_stream_steps` 缩放测试显示：
+    - `1500 -> ~3.4 s, valid=14`
+    - `2000 -> ~4.3 s, valid=17`
+    - `3000 -> ~10.3 s, valid=26`
+    - `4000 -> ~19.4 s, valid=33`
+    - `6000 -> ~47.5 s, valid=39`
+  - 低 `n_stream_steps` 虽然适合烟雾测试，但默认 `min_valid_fraction=0.70` 下容易因有效节点不足直接返回 `-inf`。
+  - 已给 CLI 增加：
+    - `--min-valid-fraction`
+    - `--profile-initial-logp`
+- Validation result:
+  - 单点评估计时完成，已定位 walltime 主因。
+  - 代码补丁已写入仓库工作树，尚未进一步跑完整 smoke MCMC。
+- Remaining issues:
+  - 还没有跑一组“既能较快结束、又不至于全 `-inf`”的正式 smoke 参数。
+- Next step:
+  - 用 `--profile-initial-logp` 先预估 walltime，再选一组低成本 smoke 参数（可能需要同时下调 `n_stream_steps` 与 `min_valid_fraction`）。
+
 ## 2026-04-17
 
 - Task: 清理 `step4c_step3b_outputs_control` 中的 raw track 跳点与尾端过窄宽度，并输出 mock-fit 专用 cleaned track。

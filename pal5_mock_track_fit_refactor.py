@@ -202,9 +202,9 @@ class SamplerConfig:
         }
     )
 
-    nwalkers: int = 48
-    burnin_steps: int = 200
-    production_steps: int = 600
+    nwalkers: int = 16
+    burnin_steps: int = 5
+    production_steps: int = 5
     random_seed: int = 42
 
 
@@ -611,6 +611,7 @@ def run_mcmc(
     sampler_cfg: SamplerConfig,
     outdir: str | Path,
     ncores: int = 1,
+    mp_start_method: str = "spawn",
 ) -> tuple[Any, np.ndarray, Any]:
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -621,16 +622,14 @@ def run_mcmc(
     pd = _import_pandas()
 
     effective_ncores = max(1, int(ncores))
-    if effective_ncores > 1 and sys.platform == "darwin":
-        print(
-            "[warn] disabling multiprocessing pool on macOS; "
-            "the long formal run deadlocked in SemLock/pipe synchronization."
-        )
-        effective_ncores = 1
 
     pool = None
     if effective_ncores > 1:
-        ctx = mp.get_context("spawn")
+        ctx = mp.get_context(mp_start_method)
+        print(
+            f"[info] enabling multiprocessing pool: "
+            f"ncores={min(effective_ncores, nwalkers)} start_method={mp_start_method}"
+        )
         pool = ctx.Pool(processes=min(effective_ncores, nwalkers))
 
     try:
@@ -660,6 +659,29 @@ def run_mcmc(
     np.save(outdir / "log_prob.npy", sampler.get_log_prob())
 
     return sampler, flat_samples, summary_df
+
+
+def profile_initial_log_probability(
+    observed: TrackData,
+    model_cfg: StreamModelConfig,
+    sampler_cfg: SamplerConfig,
+) -> float:
+    import time
+
+    theta0 = make_initial_state(sampler_cfg)[0]
+    t0 = time.time()
+    logp0 = log_probability(theta0, observed, model_cfg, sampler_cfg)
+    dt = time.time() - t0
+    total_steps = sampler_cfg.burnin_steps + sampler_cfg.production_steps
+    rough_total_evals = sampler_cfg.nwalkers * total_steps
+    rough_serial_hours = (dt * rough_total_evals) / 3600.0
+    print(
+        "[timing] initial log_probability "
+        f"dt={dt:.3f}s logp={logp0:.3f} "
+        f"rough_total_evals~{rough_total_evals} "
+        f"rough_serial_walltime~{rough_serial_hours:.2f} hr"
+    )
+    return dt
 
 
 def best_fit_params_from_samples(samples: np.ndarray, sampler_cfg: SamplerConfig) -> Dict[str, float]:
@@ -757,17 +779,21 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--default-width-err", type=float, default=0.05)
     p.add_argument("--use-width-term", action="store_true", help="Include width term in the likelihood")
     p.add_argument("--ncores", type=int, default=1, help="Number of worker processes for parallel likelihood evaluation")
-    p.add_argument("--nwalkers", type=int, default=48)
-    p.add_argument("--burnin", type=int, default=200)
-    p.add_argument("--steps", type=int, default=600)
+    p.add_argument("--nwalkers", type=int, default=16)
+    p.add_argument("--burnin", type=int, default=5)
+    p.add_argument("--steps", type=int, default=5)
     p.add_argument("--dt-myr", type=float, default=0.5)
-    p.add_argument("--n-stream-steps", type=int, default=6000)
+    p.add_argument("--n-stream-steps", type=int, default=3000)
     p.add_argument("--release-every", type=int, default=1)
     p.add_argument("--n-particles", type=int, default=2)
     p.add_argument("--min-particles-per-node", type=int, default=16)
+    p.add_argument("--min-valid-fraction", type=float, default=0.30)
+    p.add_argument("--mp-start-method", choices=("spawn", "fork", "forkserver"), default="spawn")
     p.add_argument("--track-half-window-deg", type=float, default=0.75)
     p.add_argument("--track-jitter-deg", type=float, default=0.03)
     p.add_argument("--width-jitter-deg", type=float, default=0.03)
+    p.add_argument("--profile-initial-logp", action="store_true", help="Time one initial log_probability call and print a rough serial walltime estimate before sampling")
+    p.add_argument("--profile-only", action="store_true", help="Run the initial log_probability timing probe and exit without running MCMC")
     p.add_argument("--include-static-bar", action="store_true")
     p.add_argument("--log10-mhalo-init", type=float, default=11.75)
     p.add_argument("--r-s-init", type=float, default=20.0)
@@ -814,6 +840,7 @@ def main() -> None:
         release_every=args.release_every,
         n_particles=args.n_particles,
         min_particles_per_node=args.min_particles_per_node,
+        min_valid_fraction=args.min_valid_fraction,
         track_half_window_deg=args.track_half_window_deg,
         track_jitter_deg=args.track_jitter_deg,
         width_jitter_deg=args.width_jitter_deg,
@@ -856,7 +883,19 @@ def main() -> None:
     observed_tab.meta.update(observed.meta)
     observed_tab.write(outdir / "observed_track_used.fits", overwrite=True)
 
-    _, samples, summary = run_mcmc(observed, model_cfg, sampler_cfg, outdir, ncores=max(1, args.ncores))
+    if args.profile_initial_logp:
+        profile_initial_log_probability(observed, model_cfg, sampler_cfg)
+        if args.profile_only:
+            return
+
+    _, samples, summary = run_mcmc(
+        observed,
+        model_cfg,
+        sampler_cfg,
+        outdir,
+        ncores=max(1, args.ncores),
+        mp_start_method=args.mp_start_method,
+    )
     print(summary.to_string(index=False))
 
     best_params = best_fit_params_from_samples(samples, sampler_cfg)

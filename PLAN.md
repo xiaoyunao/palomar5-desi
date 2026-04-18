@@ -2,9 +2,11 @@
 
 ## Current objective
 
-按 `PAL5_CODEX_HANDOFF.md` 的统一思路，先完成 Palomar 5 项目的 Phase 0
-预处理基线，产出一个干净、Bonaca-compatible 的 Pal 5 预处理星表和基础 QC，
-然后再进入 member selection、distance gradient 和 morphology。
+当前优先目标已经从早期 Phase 0 预处理转移到新的 no-bar 主线：
+
+- `step2 -> step3b(control+MAP) -> step4c(RRL weak-prior) -> step3b -> mockfit -> visualize`
+- 在 `~/Desktop/Pal5` 中只保留主线必需输入与当前主线输出
+- 用可接受 walltime 的 MCMC 默认值维持主线可复现性，再决定后续是否提高统计量
 
 ## Scientific goal
 
@@ -176,6 +178,38 @@ Phase 0 预期输出：
 
 ## Current status
 
+- 新的主线 driver 已纳入 repo：
+  - `/Users/island/Desktop/Palomar 5/pal5_mainline_step2_to_mockfit.sh`
+  - `/Users/island/Desktop/Palomar 5/PAL5_MAINLINE_STEP2_TO_MOCKFIT.md`
+- 主线默认 mockfit 已改为当前可跑通的 no-bar 配置：
+  - `ncores=1`
+  - `nwalkers=16`
+  - `burnin=5`
+  - `steps=5`
+  - `n_stream_steps=3000`
+  - `min_valid_fraction=0.30`
+- 并行 MCMC 代码路径已恢复，并支持 `mp_start_method` 选择；
+  - 但在当前 macOS 本机测试里仍不稳定，因此主线默认仍保持串行。
+- 主线 plotting 默认只保留 `01` 到 `10`：
+  - 跳过 `11` 到 `15` 的 RV / literature 图
+- `~/Desktop/Pal5` 已清理为主线运行目录，只保留：
+  - `final_g25_preproc.fits`
+  - `pal5.dat`
+  - `step3_outputs_hw15/pal5_step3_pass1_prior_track.txt`
+  - 新的主线输出目录
+- 已用新的主线 driver 成功 rerun 全链：
+  - `step2_outputs/`
+  - `step3b_outputs_control/`
+  - `step4c_outputs/`
+  - `step4c_step3b_outputs_control/`
+  - `mockfit_mainline_step4c_trackonly/`
+- 当前最新 mockfit 中位参数：
+  - `log10_mhalo = 11.744605`
+  - `r_s = 19.772633`
+  - `q_z = 0.933607`
+  - `pm_ra_cosdec = -2.288558`
+  - `pm_dec = -2.265269`
+  - `distance = 22.877126`
 - background 拟合主线当前已暂停；后续主线重新锚定到 `step4c + step3b(control+MAP)`。
 - 当前主线输出目录改为：
   - `/Users/island/Desktop/Pal5/mainline_step4c_rerun_20260417`
